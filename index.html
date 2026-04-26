@@ -325,7 +325,8 @@ const S={
   goal:{type:'units',value:''},
   histMonth:fiscalStart(todayStr()),
   showForm:false,
-  nc:{site:'PHSW',ancKeys:[],ancUnits:0,ancLabel:''},
+  editId:null,    // null = new case, string id = editing existing
+  nc:{site:'PHSW',start:'',end:'',ancKeys:[],ancUnits:0,ancLabel:''},
   overlapErr:false,timeErr:false,
   ancModal:null,  // null | 'case' | 'only'
   ancSel:[],
@@ -379,27 +380,29 @@ function renderLog(){
   const ds=S.date, d=getDay(ds), cases=d.cases||[], ancs=d.ancillary||[];
   const wknd=isWeekend(ds), bd=dayBreakdown(ds);
   const SITE_BTNS=SITES.map(s=>{const sc=SS[s],sel=S.nc.site===s;return`<button class="site-btn${sel?' sel':''}" onclick="setSite('${s}')" style="${sel?'background:'+sc.bg+';color:'+sc.c+';border-color:'+sc.c:''}">${s}</button>`;}).join('');
-  // time values: read from DOM if form is showing, else current time
-  const st=currTime(), et=currTime();
+  // time values from state (set when editing, or current time for new)
+  const st=S.nc.start||currTime(), et=S.nc.end||currTime();
+  const isEditing=!!S.editId;
 
   const CASE_LIST=cases.map(c=>{
     const tu=caseUnits(c.start,c.end,ds),dur=pm(c.end)-pm(c.start),au=c.ancillaryUnits||0;
     const sc=SS[c.site]||SS.PHSW,hasAfter=!wknd&&pm(c.end)>CUTOFF,hasAnc=au>0;
+    const isEditing=S.editId===c.id;
     const anc_strip=hasAnc&&c.ancillaryLabel?`<div class="case-anc-strip">⬡ ${esc(c.ancillaryLabel)}</div>`:'';
     const units_html=hasAnc
       ?`<span style="color:#8e8e93">${tu.toFixed(1)} time</span><span>+</span><span style="color:#5856d6">${au.toFixed(2)} anc</span><span>=</span><span style="font-weight:700;color:#111">${(tu+au).toFixed(2)} units</span>`
       :`<span>${tu.toFixed(1)} units</span>`;
-    return`<div class="case-row${hasAnc?' has-anc':''}">
+    return`<div class="case-row${hasAnc?' has-anc':''}${isEditing?' editing':''}" style="${isEditing?'border-left-color:#007aff;background:#f0f6ff':''}" onclick="editCase('${esc(c.id)}')">
       <div class="case-row-top">
         <span class="site-badge" style="background:${sc.bg};color:${sc.c}">${esc(c.site)}</span>
         <div class="case-info">
-          <div class="case-time">${esc(c.start)} – ${esc(c.end)}</div>
+          <div class="case-time">${esc(c.start)} – ${esc(c.end)}${isEditing?'<span style="font-size:11px;color:#007aff;font-weight:600;margin-left:6px">editing…</span>':''}</div>
           <div class="case-meta"><span>${fmins(dur)}</span><span>·</span>${units_html}
             ${hasAfter?'<span class="tag tag-orange">after-hours ×1.2</span>':''}
             ${wknd?'<span class="tag tag-purple">weekend ×1.2</span>':''}
           </div>
         </div>
-        <button class="del-btn" onclick="delCase('${esc(c.id)}')">×</button>
+        <button class="del-btn" onclick="event.stopPropagation();delCase('${esc(c.id)}')">×</button>
       </div>${anc_strip}</div>`;
   }).join('');
 
@@ -418,19 +421,22 @@ function renderLog(){
     :'+ Ancillary procedures';
 
   const FORM=S.showForm?`
-    <div class="card">
+    <div class="card" style="${isEditing?'border:2px solid #007aff':''}">
+      <div style="font-size:13px;font-weight:700;color:${isEditing?'#007aff':'#8e8e93'};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">
+        ${isEditing?'Edit case':'New case'}
+      </div>
       <label class="form-label">Site</label>
       <div class="site-btns">${SITE_BTNS}</div>
       <div class="time-row">
-        <div class="time-field"><label>Start time</label><input type="time" id="inp-start" value="${st}" onchange="updatePreview()"></div>
-        <div class="time-field"><label>End time</label><input type="time" id="inp-end" value="${et}" onchange="updatePreview()"></div>
+        <div class="time-field"><label>Start time</label><input type="time" id="inp-start" value="${esc(st)}" onchange="updatePreview()"></div>
+        <div class="time-field"><label>End time</label><input type="time" id="inp-end" value="${esc(et)}" onchange="updatePreview()"></div>
       </div>
       <button class="btn-anc-inline${S.nc.ancKeys.length>0?' has':''}" onclick="openAnc('case')">${anc_lbl}</button>
       ${S.timeErr?'<div class="warn-box">End time must be after start time</div>':''}
       ${S.overlapErr?'<div class="warn-box">This case overlaps with an existing case — adjust the times</div>':''}
       <div id="preview-box"></div>
       <div class="btn-row">
-        <button class="btn btn-blue" onclick="addCase()" id="add-case-btn">Add case</button>
+        <button class="btn btn-blue" onclick="addCase()" id="add-case-btn">${isEditing?'Save changes':'Add case'}</button>
         <button class="btn btn-gray btn-sm" onclick="cancelForm()">Cancel</button>
       </div>
     </div>`:
@@ -821,13 +827,31 @@ function updatePreview(){
 }
 
 // ── Action handlers (global) ──────────────────────────────────────
-function setTab(t){S.tab=t;S.showForm=false;S.overlapErr=false;S.timeErr=false;render();}
-function setDate(v){S.date=v;S.showForm=false;render();}
+function setTab(t){S.tab=t;S.showForm=false;S.editId=null;S.overlapErr=false;S.timeErr=false;render();}
+function setDate(v){S.date=v;S.showForm=false;S.editId=null;render();}
 function setHistMonth(v){S.histMonth=v;renderContent();}
 function gotoDay(ds){S.date=ds;S.tab='log';render();}
 function setSite(s){S.nc.site=s;renderContent();}
-function showForm(){S.showForm=true;S.overlapErr=false;S.timeErr=false;S.nc.ancKeys=[];S.nc.ancUnits=0;S.nc.ancLabel='';render();}
-function cancelForm(){S.showForm=false;S.overlapErr=false;S.timeErr=false;render();}
+
+function showForm(){
+  S.showForm=true;S.editId=null;S.overlapErr=false;S.timeErr=false;
+  S.nc={site:'PHSW',start:currTime(),end:currTime(),ancKeys:[],ancUnits:0,ancLabel:''};
+  render();
+}
+function cancelForm(){S.showForm=false;S.editId=null;S.overlapErr=false;S.timeErr=false;render();}
+
+function editCase(id){
+  // If tapping the already-open edit form for same case, collapse it
+  if(S.editId===id){cancelForm();return;}
+  const d=getDay(S.date);
+  const c=(d.cases||[]).find(x=>x.id===id);
+  if(!c)return;
+  S.showForm=true;
+  S.editId=id;
+  S.overlapErr=false;S.timeErr=false;
+  S.nc={site:c.site,start:c.start,end:c.end,ancKeys:c.ancillaryKeys||[],ancUnits:c.ancillaryUnits||0,ancLabel:c.ancillaryLabel||''};
+  render();
+}
 
 function addCase(){
   const ts=document.getElementById('inp-start');
@@ -836,11 +860,21 @@ function addCase(){
   const s=ts.value,e=te.value;
   if(!s||!e||pm(e)<=pm(s)){S.timeErr=true;renderContent();return;}
   const d=getDay(S.date),cases=d.cases||[];
-  if(hasOverlap(s,e,cases)){S.overlapErr=true;renderContent();return;}
-  const nc={id:Date.now()+'',site:S.nc.site,start:s,end:e,ancillaryKeys:S.nc.ancKeys,ancillaryUnits:S.nc.ancUnits,ancillaryLabel:S.nc.ancLabel};
-  setDay(S.date,{...d,cases:[...cases,nc]});
-  S.nc={site:S.nc.site,ancKeys:[],ancUnits:0,ancLabel:''};
-  S.showForm=false;S.overlapErr=false;S.timeErr=false;
+  // Exclude self from overlap check when editing
+  const otherCases=S.editId?cases.filter(c=>c.id!==S.editId):cases;
+  if(hasOverlap(s,e,otherCases)){S.overlapErr=true;renderContent();return;}
+  if(S.editId){
+    // Update existing case in place
+    const updated=cases.map(c=>c.id===S.editId
+      ?{...c,site:S.nc.site,start:s,end:e,ancillaryKeys:S.nc.ancKeys,ancillaryUnits:S.nc.ancUnits,ancillaryLabel:S.nc.ancLabel}
+      :c);
+    setDay(S.date,{...d,cases:updated});
+  } else {
+    const nc={id:Date.now()+'',site:S.nc.site,start:s,end:e,ancillaryKeys:S.nc.ancKeys,ancillaryUnits:S.nc.ancUnits,ancillaryLabel:S.nc.ancLabel};
+    setDay(S.date,{...d,cases:[...cases,nc]});
+  }
+  S.nc={site:S.nc.site,start:currTime(),end:currTime(),ancKeys:[],ancUnits:0,ancLabel:''};
+  S.showForm=false;S.editId=null;S.overlapErr=false;S.timeErr=false;
   render();
 }
 
@@ -916,6 +950,11 @@ function refreshGoalStats(){
 function setGoalVal(v){saveGoalVal(v);}
 
 function openAnc(mode){
+  // Preserve current time inputs before opening modal
+  const ts=document.getElementById('inp-start');
+  const te=document.getElementById('inp-end');
+  if(ts)S.nc.start=ts.value;
+  if(te)S.nc.end=te.value;
   S.ancModal=mode;
   S.ancSel=mode==='case'?[...S.nc.ancKeys]:[];
   renderModal();
