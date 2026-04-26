@@ -2,836 +2,897 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Anesthesia">
 <title>Anesthesia Tracker</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:#f2f2f7;min-height:100vh;display:flex;justify-content:center}
-#root{width:100%;max-width:430px}
-input[type=checkbox]{width:20px;height:20px;cursor:pointer;accent-color:#007aff;flex-shrink:0}
-input[type=number],input[type=date]{font-family:inherit;font-size:15px;padding:10px 12px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;color:#111;outline:none;width:100%}
-input[type=number]:focus,input[type=date]:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,0.15)}
-select{font-family:inherit;font-size:14px;padding:9px 12px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;color:#111;outline:none;width:100%;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-select:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,0.15)}
-button{font-family:inherit;cursor:pointer;transition:all 0.15s}
-button:active{transform:scale(0.97)}
-.app{min-height:100vh;background:#f2f2f7;display:flex;flex-direction:column}
-
-/* ── Header ── */
-.header{background:#fff;padding:22px 16px 0;border-bottom:1px solid #e5e5ea;position:sticky;top:0;z-index:10;text-align:center}
-.header-icon-wrap{display:flex;justify-content:center;margin-bottom:10px}
-.header-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#007aff,#5856d6);box-shadow:0 4px 14px rgba(88,86,214,0.35)}
-.header-title{font-size:27px;font-weight:900;letter-spacing:-0.9px;margin-bottom:3px;background:linear-gradient(135deg,#007aff 10%,#5856d6 90%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.header-sub{font-size:12px;color:#8e8e93;margin-bottom:14px;font-weight:400}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif}
+body{padding-bottom:env(safe-area-inset-bottom)}
+#hdr{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #e5e5ea}
+.hdr-top{padding:18px 16px 10px;text-align:center}
+.hdr-icon-wrap{display:flex;justify-content:center;margin-bottom:9px}
+.hdr-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#007aff,#5856d6);box-shadow:0 4px 14px rgba(88,86,214,0.38)}
+.hdr-title{font-size:25px;font-weight:900;letter-spacing:-0.8px;background:linear-gradient(135deg,#007aff,#5856d6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-sub{font-size:12px;color:#8e8e93;margin-top:2px}
 .tab-bar{display:flex;border-top:0.5px solid #f2f2f7}
-.tab{flex:1;padding:9px 0;border:none;background:none;font-size:11px;font-weight:500;color:#8e8e93;cursor:pointer;border-bottom:2.5px solid transparent;transition:all 0.15s}
-.tab.active{color:#007aff;border-bottom-color:#007aff}
-
-.content{padding:14px;flex:1}
+.tab{flex:1;padding:9px 2px;border:none;background:none;font-size:11px;font-weight:500;color:#8e8e93;cursor:pointer;border-bottom:2.5px solid transparent;font-family:inherit}
+.tab.active{color:#007aff;border-bottom-color:#007aff;font-weight:700}
+#main{padding:14px 14px calc(14px + env(safe-area-inset-bottom));overflow-y:auto}
+/* Cards & metrics */
 .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
 .metric{background:#fff;border-radius:13px;padding:13px 15px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
 .metric.full{grid-column:1/-1}
-.metric-label{font-size:11px;color:#8e8e93;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
-.metric-value{font-size:26px;font-weight:800;color:#111;letter-spacing:-0.7px}
-.metric-sub{font-size:11px;color:#8e8e93;margin-top:3px}
-.case-row{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:9px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.site-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;white-space:nowrap;letter-spacing:0.4px}
+.metric-lbl{font-size:11px;color:#8e8e93;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.metric-val{font-size:26px;font-weight:800;color:#111;letter-spacing:-0.7px}
+.metric-sub{font-size:11px;color:#8e8e93;margin-top:2px}
+.card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.section-title{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-left:2px}
+/* Buttons */
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;text-align:center}
+.btn-blue{background:#007aff;color:#fff}
+.btn-blue:disabled{background:#c7d8f5;color:#fff}
+.btn-outline{background:#fff;color:#007aff;border:1.5px solid #007aff;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.btn-purple{background:#5856d6;color:#fff;box-shadow:0 2px 8px rgba(88,86,214,0.28)}
+.btn-gray{background:#f2f2f7;color:#007aff;border:1px solid #d1d1d6}
+.btn-sm{padding:10px 16px;width:auto;display:inline-block;font-size:14px}
+.btn-row{display:flex;gap:8px;margin-top:2px}
+.btn-row .btn{flex:1}
+.btn-anc-inline{width:100%;padding:10px;background:#f5f3ff;color:#5856d6;border:1.5px solid #c4b5fd;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:12px;text-align:left}
+.btn-anc-inline.has{background:#ede9fe}
+.btn-download{display:inline-flex;align-items:center;gap:5px;padding:9px 12px;background:#f2f2f7;color:#007aff;border:1px solid #d1d1d6;border-radius:10px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
+/* Inputs */
+input[type=date],input[type=time],input[type=number]{font-family:inherit;font-size:15px;padding:10px 12px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;color:#111;outline:none;width:100%;-webkit-appearance:none}
+input[type=date]:focus,input[type=time]:focus,input[type=number]:focus{border-color:#007aff;box-shadow:0 0 0 3px rgba(0,122,255,0.15)}
+select{font-family:inherit;font-size:14px;padding:9px 12px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;color:#111;outline:none;width:100%;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.form-label{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;display:block}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.time-field label{display:block;font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+/* Case rows */
+.case-row{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:3.5px solid #e5e5ea}
+.case-row.has-anc{border-left-color:#5856d6}
+.case-row-top{display:flex;align-items:center;gap:9px}
 .case-info{flex:1;min-width:0}
 .case-time{font-size:14px;font-weight:600;color:#111}
 .case-meta{font-size:11px;color:#8e8e93;margin-top:2px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.case-anc-strip{background:#f5f3ff;border-radius:6px;padding:5px 8px;margin-top:6px;font-size:11px;color:#5856d6;font-weight:500}
+.anc-row{background:#fff;border-radius:12px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:9px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:3.5px solid #5856d6}
+.del-btn{width:28px;height:28px;border-radius:50%;border:none;background:#ff3b30;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;cursor:pointer;font-family:inherit}
+/* Badges */
+.site-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;white-space:nowrap;letter-spacing:0.4px}
+.anc-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;background:#ede9fe;color:#5856d6;white-space:nowrap;flex-shrink:0}
+.stip-tag{font-size:10px;background:#dbeafe;color:#1d4ed8;padding:2px 5px;border-radius:4px;font-weight:700}
+.locums-tag{font-size:10px;background:#dcfce7;color:#15803d;padding:2px 5px;border-radius:4px;font-weight:700}
+.wkd-tag{font-size:10px;background:#ede9fe;color:#6d28d9;padding:2px 5px;border-radius:4px;font-weight:700}
 .tag{font-size:10px;padding:2px 5px;border-radius:4px;font-weight:700}
 .tag-orange{background:#fff3cd;color:#856404}
 .tag-purple{background:#ede9fe;color:#6d28d9}
-.del-btn{width:28px;height:28px;border-radius:50%;border:none;background:#ff3b30;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;padding:0}
-.add-form{background:#fff;border-radius:15px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.form-label{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;display:block}
-.site-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.site-btn{font-size:11px;font-weight:700;padding:6px 11px;border-radius:8px;border:1.5px solid #d1d1d6;background:#f2f2f7;color:#8e8e93;letter-spacing:0.4px}
-.site-btn.sel{border-width:2px}
+.base-note{display:inline-block;font-size:10px;background:#e0f0ff;color:#0055aa;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:5px;vertical-align:middle}
+.base-note-gray{display:inline-block;font-size:10px;background:#f2f2f7;color:#8e8e93;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:5px;vertical-align:middle}
+/* Info boxes */
 .preview-box{background:#f0f6ff;border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:13px;color:#1a1a2e;border:1px solid #c8dcf7}
-.warning-text{color:#b91c1c;font-size:12px;margin-bottom:9px;background:#fee2e2;padding:8px 10px;border-radius:8px;font-weight:500}
-.btn-primary{width:100%;padding:13px;background:#007aff;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700}
-.btn-primary:hover{background:#0062cc}
-.btn-primary:disabled{background:#c7d8f5;cursor:not-allowed}
-.btn-secondary{padding:12px 16px;background:#f2f2f7;color:#007aff;border:1px solid #d1d1d6;border-radius:12px;font-size:14px;font-weight:600}
-.btn-add{width:100%;padding:13px;background:#fff;color:#007aff;border:1.5px solid #007aff;border-radius:12px;font-size:15px;font-weight:700;margin-top:2px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.btn-row{display:flex;gap:8px}
-.empty{text-align:center;padding:36px 20px;color:#c7c7cc;font-size:14px;line-height:1.7}
-.history-row{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:7px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);transition:transform 0.1s}
-.history-row:hover{transform:scale(1.005)}
-.section-title{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-left:2px}
+.warn-box{color:#b91c1c;font-size:12px;margin-bottom:9px;background:#fee2e2;padding:8px 10px;border-radius:8px;font-weight:500}
+.info-box{font-size:11px;margin-top:6px;padding:6px 9px;border-radius:7px;font-weight:500;line-height:1.5}
+.info-green{background:#e3f9e9;color:#1a7a3a}
+.info-orange{background:#fff3cd;color:#856404}
 .weekend-banner{background:#ede9fe;border-radius:9px;padding:9px 12px;margin-bottom:11px;font-size:12px;color:#6d28d9;font-weight:600;border:1px solid #c4b5fd}
+/* Stipend cards */
+.stip-card{border-radius:13px;padding:13px 15px;margin-bottom:9px;cursor:pointer;border:2px solid #e5e5ea;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.stip-card.sel{border-color:#007aff;background:#f0f6ff}
+.stip-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.stip-name{font-size:16px;font-weight:700;color:#111}
+.stip-card.sel .stip-name{color:#007aff}
+.stip-desc{font-size:12px;color:#8e8e93;margin-top:1px}
+.stip-val{font-size:14px;font-weight:700;color:#34c759;margin-top:3px}
+.stip-check{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d1d6;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.stip-check.on{background:#007aff;border-color:#007aff;color:#fff}
+.ob24-row{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:5px;flex-wrap:wrap}
+.ob24-pill{padding:2px 7px;border-radius:5px;font-weight:700;font-size:10px}
+.ob24-pill.yes{background:#dcfce7;color:#15803d}
+.ob24-pill.no{background:#fee2e2;color:#b91c1c;text-decoration:line-through;opacity:0.7}
+/* Locums */
+.locums-card{border-radius:13px;padding:13px 15px;margin-bottom:9px;border:2px solid #e5e5ea;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.locums-card.active{border-color:#34c759;background:#f0fdf4}
+.locums-dollar-wrap{position:relative;margin-top:10px}
+.locums-dollar-sym{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#15803d;font-size:16px;font-weight:700;pointer-events:none}
+.locums-inp{padding-left:26px!important;border-color:#86efac!important;color:#15803d;font-weight:600}
+.locums-inp:focus{border-color:#34c759!important;box-shadow:0 0 0 3px rgba(52,199,89,0.15)!important}
+/* Revenue */
 .rev-hero{background:linear-gradient(135deg,#007aff,#5856d6);border-radius:17px;padding:18px;margin-bottom:12px;color:#fff}
-.rev-hero-label{font-size:11px;font-weight:600;opacity:0.75;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px}
-.rev-hero-value{font-size:38px;font-weight:900;letter-spacing:-1.5px}
-.rev-card{background:#fff;border-radius:15px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.rev-card-title{font-size:15px;font-weight:700;color:#111;margin-bottom:2px}
-.rev-card-range{font-size:11px;color:#8e8e93;margin-bottom:10px}
-.rev-table{width:100%;font-size:13px;border-collapse:collapse}
-.rev-table td{padding:4px 0;vertical-align:top}
-.rev-table td:first-child{color:#8e8e93;width:45%}
-.rev-table td:nth-child(2){color:#8e8e93;font-size:11px;padding-left:4px}
-.rev-table td:last-child{text-align:right;font-weight:600;color:#111}
-.rev-table tr.total-row td{border-top:1px solid #f2f2f7;padding-top:8px;font-weight:700;font-size:14px;color:#111}
-.rev-table tr.total-row td:last-child{color:#34c759;font-size:15px}
+.rev-hero-lbl{font-size:11px;font-weight:600;opacity:.75;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.rev-hero-val{font-size:38px;font-weight:900;letter-spacing:-1.5px}
+.rev-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.rev-tbl td{padding:4px 0;vertical-align:top}
+.rev-tbl td:first-child{color:#8e8e93;width:45%}
+.rev-tbl td:nth-child(2){color:#8e8e93;font-size:11px;padding-left:4px}
+.rev-tbl td:last-child{text-align:right;font-weight:600;color:#111}
+.rev-tbl tr.total-row td{border-top:1px solid #f2f2f7;padding-top:8px;font-weight:700;font-size:14px}
+.rev-tbl tr.total-row td:last-child{color:#34c759;font-size:15px}
 .rev-detail{border-top:1px solid #f2f2f7;margin-top:8px;padding-top:8px}
-.rev-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
-.rev-row span:first-child{color:#8e8e93}
-.rev-row span:last-child{font-weight:600;color:#111}
-.stipend-card{border-radius:13px;padding:13px 15px;margin-bottom:9px;cursor:pointer;transition:all 0.15s;border:2px solid #e5e5ea;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.stipend-card.selected{border-color:#007aff;background:#f0f6ff}
-.stipend-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
-.stipend-name{font-size:16px;font-weight:700;color:#111}
-.stipend-check{width:22px;height:22px;border-radius:50%;border:2px solid #d1d1d6;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:all 0.15s}
-.stipend-check.on{background:#007aff;border-color:#007aff;color:#fff}
-.stipend-card.selected .stipend-name{color:#007aff}
-.stipend-detail{font-size:12px;color:#8e8e93}
-.stipend-value{font-size:14px;font-weight:700;color:#34c759;margin-top:3px}
-.stipend-note{font-size:11px;margin-top:6px;padding:6px 9px;border-radius:7px;font-weight:500;line-height:1.5}
-.stipend-note.green{background:#e3f9e9;color:#1a7a3a}
-.stipend-note.orange{background:#fff3cd;color:#856404}
-.stipend-note.blue{background:#e0f0ff;color:#0055aa}
-.stip-summary{background:#fff;border-radius:13px;padding:14px;margin-top:4px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.stip-tag{font-size:10px;background:#dbeafe;color:#1d4ed8;padding:2px 5px;border-radius:4px;font-weight:700}
-.wkd-tag{font-size:10px;background:#ede9fe;color:#6d28d9;padding:2px 5px;border-radius:4px;font-weight:700}
-.drum-wrap{position:relative;overflow:hidden;border-radius:12px;background:#f2f2f7;flex:1}
-.drum-scroll{overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;height:100%}
-.drum-scroll::-webkit-scrollbar{display:none}
-.drum-item{display:flex;align-items:center;justify-content:center;user-select:none;font-variant-numeric:tabular-nums;scroll-snap-align:center}
-.drum-highlight{position:absolute;left:6px;right:6px;background:rgba(0,122,255,0.11);border-radius:8px;pointer-events:none;border-top:1.5px solid rgba(0,122,255,0.22);border-bottom:1.5px solid rgba(0,122,255,0.22)}
+.rev-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;align-items:center;gap:8px}
+.rev-row .rv-lbl{color:#8e8e93;flex:1}
+.rev-row .rv-val{font-weight:600;color:#111;text-align:right;white-space:nowrap}
+/* History */
+.year-card{background:linear-gradient(145deg,#1c1c1e,#2c2c2e);border-radius:17px;padding:18px;margin-bottom:12px;color:#fff}
+.year-lbl{font-size:11px;font-weight:600;opacity:.6;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.year-val{font-size:34px;font-weight:900;letter-spacing:-1.2px}
+.year-sub{font-size:12px;opacity:.5;margin-top:5px}
+.month-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.bk-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.bk-sec{font-size:10px;font-weight:800;color:#8e8e93;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 3px;margin-top:6px}
+.bk-sec:first-child{padding-top:0;margin-top:0}
+.bk-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px;gap:8px}
+.bk-lbl{color:#8e8e93;padding-left:8px;flex:1}
+.bk-val{font-weight:600;color:#111;text-align:right;white-space:nowrap}
+.bk-purple{color:#5856d6}
+.bk-blue{color:#007aff}
+.bk-green{color:#15803d}
+.bk-div{border-top:1px solid #f2f2f7;margin:5px 0}
+.bk-total{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;font-weight:800}
+.bk-total .bk-val{color:#34c759;font-size:15px}
+.hist-row{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:7px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.hist-row-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.hist-date{font-size:14px;font-weight:700;color:#111;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.hist-rev{text-align:right}
+.hist-rev-amt{font-size:14px;font-weight:800;color:#34c759}
+.hist-units{font-size:11px;color:#8e8e93}
+.hist-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#8e8e93}
+.hist-badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+/* Analytics */
 .goal-toggle{display:flex;background:#f2f2f7;border-radius:10px;padding:3px;gap:3px;margin-bottom:12px}
-.goal-toggle-btn{flex:1;padding:8px;border:none;background:none;border-radius:8px;font-size:14px;font-weight:500;color:#8e8e93;transition:all 0.2s}
-.goal-toggle-btn.active{background:#fff;color:#007aff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-.analytics-card{background:#fff;border-radius:15px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.goal-btn{flex:1;padding:8px;border:none;background:none;border-radius:8px;font-size:14px;font-weight:500;color:#8e8e93;font-family:inherit;cursor:pointer}
+.goal-btn.active{background:#fff;color:#007aff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .stat-box{background:#f8f8f8;border-radius:10px;padding:11px 12px}
-.stat-label{font-size:10px;color:#8e8e93;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
-.stat-value{font-size:17px;font-weight:800;color:#111;letter-spacing:-0.4px}
-.stat-value.green{color:#34c759}
-.stat-value.orange{color:#ff9500}
-.stat-value.red{color:#ff3b30}
-.year-card{background:linear-gradient(145deg,#1c1c1e,#2c2c2e);border-radius:17px;padding:18px;margin-bottom:12px;color:#fff}
-.year-label{font-size:11px;font-weight:600;opacity:0.6;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px}
-.year-value{font-size:34px;font-weight:900;letter-spacing:-1.2px}
-.year-sub{font-size:12px;opacity:0.5;margin-top:5px}
-.month-summary{background:#fff;border-radius:13px;padding:13px 15px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.month-stat{text-align:center}
-.month-stat-val{font-size:18px;font-weight:800;color:#111}
-.month-stat-lab{font-size:10px;color:#8e8e93;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
-.btn-download{padding:9px 13px;background:#f2f2f7;color:#007aff;border:1px solid #d1d1d6;border-radius:10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.ob24-base-row{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:1px}
-.ob24-day-pill{padding:2px 7px;border-radius:5px;font-weight:700;font-size:10px}
-.ob24-day-pill.yes{background:#dcfce7;color:#15803d}
-.ob24-day-pill.no{background:#fee2e2;color:#b91c1c;text-decoration:line-through;opacity:0.7}
+.stat-lbl{font-size:10px;color:#8e8e93;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.stat-val{font-size:17px;font-weight:800;color:#111;letter-spacing:-.4px}
+.stat-val.green{color:#34c759}
+.stat-val.orange{color:#ff9500}
+.stat-val.red{color:#ff3b30}
+.stat-full{grid-column:1/-1}
+/* Site selector */
+.site-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.site-btn{font-size:11px;font-weight:700;padding:6px 11px;border-radius:8px;border:1.5px solid #d1d1d6;background:#f2f2f7;color:#8e8e93;letter-spacing:.4px;cursor:pointer;font-family:inherit}
+.site-btn.sel{border-width:2px}
+/* Stip summary */
+.stip-sum{background:#fff;border-radius:13px;padding:14px;margin-top:4px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+/* Empty state */
+.empty{text-align:center;padding:36px 20px;color:#c7c7cc;font-size:14px;line-height:1.7}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-sheet{background:#f2f2f7;border-radius:22px 22px 0 0;width:100%;max-width:430px;max-height:88vh;overflow-y:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.modal-handle{width:36px;height:4px;background:#d1d1d6;border-radius:2px;margin:12px auto 14px}
+.modal-title{font-size:18px;font-weight:800;color:#111;text-align:center;margin-bottom:3px;letter-spacing:-.4px}
+.modal-sub{font-size:12px;color:#8e8e93;text-align:center;margin-bottom:16px}
+.modal-body{padding:0 14px}
+.proc-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.proc-card.sel{border-color:#5856d6;background:#f5f3ff}
+.proc-card.sel-disc{border-color:#7c3aed;background:#f5f3ff}
+.proc-left{flex:1}
+.proc-name{font-size:14px;font-weight:600;color:#111}
+.proc-name.sel{color:#5856d6}
+.proc-name.sel-disc{color:#7c3aed}
+.proc-units{font-size:11px;color:#8e8e93;margin-top:1px}
+.proc-check{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d1d6;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.proc-check.on{background:#5856d6;border-color:#5856d6;color:#fff}
+.proc-check.on-disc{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.proc-divider{font-size:10px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;padding:4px 0 3px;border-top:1px solid #e5e5ea;margin-top:4px;margin-bottom:4px}
+.anc-preview{background:#f0edff;border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:13px;color:#3b2fc9;border:1px solid #c4b5fd}
+.block-note{background:#f3e8ff;border-radius:7px;padding:6px 9px;margin-bottom:8px;font-size:11px;color:#7c3aed;font-weight:500}
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useCallback,useRef}=React;
+<div id="hdr"></div>
+<div id="main"></div>
+<div id="modal" class="modal-overlay hidden"></div>
 
-const SITES=["PHSW","SWRSC","TVCASC","TVCGI","AGAC"];
-const UNIT_VAL=70,BASE_REV=800,CUTOFF=17*60,ITEM_H=46,PAD=2;
-const SITE_STYLE={
-  PHSW:{bg:"#dbeafe",color:"#1d4ed8"},SWRSC:{bg:"#dcfce7",color:"#15803d"},
-  TVCASC:{bg:"#fef9c3",color:"#854d0e"},TVCGI:{bg:"#fce7f3",color:"#9d174d"},AGAC:{bg:"#ede9fe",color:"#6d28d9"}
-};
-// sameBase is handled dynamically for OB_AM and OB_24; kept 0 here to avoid double-counting
+<script>
+'use strict';
+
+// ── Constants ─────────────────────────────────────────────────────
+const UNIT_VAL=70, BASE_REV=800, CUTOFF=17*60;
+const SITES=['PHSW','SWRSC','TVCASC','TVCGI','AGAC'];
+const SS={PHSW:{bg:'#dbeafe',c:'#1d4ed8'},SWRSC:{bg:'#dcfce7',c:'#15803d'},TVCASC:{bg:'#fef9c3',c:'#854d0e'},TVCGI:{bg:'#fce7f3',c:'#9d174d'},AGAC:{bg:'#ede9fe',c:'#6d28d9'}};
 const STIP={
-  MDA:  {key:"MDA",  label:"MDA",   desc:"Medical Director of Anesthesiology",  units:34},
-  AOD:  {key:"AOD",  label:"AOD",   desc:"Anesthesiologist of the Day",          units:34},
-  OB_AM:{key:"OB_AM",label:"OB AM", desc:"OB Morning Coverage",                  units:42},
-  OB_PM:{key:"OB_PM",label:"OB PM", desc:"OB Afternoon / Evening Coverage",      units:49},
-  OB_24:{key:"OB_24",label:"OB 24", desc:"24-hr shift  06:30 → next day 06:30", units:91},
+  MDA: {key:'MDA',label:'MDA',desc:'Medical Director of Anesthesiology',units:34,alwaysBase:true},
+  AOD: {key:'AOD',label:'AOD',desc:'Anesthesiologist of the Day',units:34,alwaysBase:true},
+  OB_AM:{key:'OB_AM',label:'OB AM',desc:'OB Morning Coverage',units:42,alwaysBase:true},
+  OB_PM:{key:'OB_PM',label:'OB PM',desc:'OB Afternoon/Evening Coverage',units:49,alwaysBase:false},
+  OB_24:{key:'OB_24',label:'OB 24',desc:'24-hr shift  06:30 → next day 06:30',units:91,alwaysBase:false},
 };
-const STIP_KEYS=["MDA","AOD","OB_AM","OB_PM","OB_24"];
+const STIP_KEYS=['MDA','AOD','OB_AM','OB_PM','OB_24'];
+const ANCS=[
+  {key:'ALINE',label:'A-line',units:0.86,isBlock:false},
+  {key:'CENTRAL',label:'Central Line',units:1.43,isBlock:false},
+  {key:'LABOR_EPI',label:'Labor Epidural',units:3.5,isBlock:false},
+  {key:'TAP_BI',label:'TAP Bilateral',units:2.0,isBlock:false},
+  {key:'BRACHIAL',label:'Brachial Plexus',units:2.5,isBlock:true},
+  {key:'SCIATIC',label:'Sciatic Block',units:2.5,isBlock:true},
+  {key:'FEMORAL',label:'Femoral Block',units:2.5,isBlock:true},
+];
 
-// ── Helpers ──────────────────────────────────────────────────────
-function pm(t){if(!t)return 0;const[h,m]=t.split(":").map(Number);return h*60+(m||0);}
-function pad2(n){return String(n).padStart(2,"0");}
-function fmins(m){const h=Math.floor(m/60),mn=m%60;if(!h)return`${mn}m`;if(!mn)return`${h}h`;return`${h}h ${mn}m`;}
-function fmtCur(n){return"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtCurShort(n){return"$"+Math.round(n).toLocaleString("en-US");}
+// ── Helpers ───────────────────────────────────────────────────────
+function pad2(n){return String(n).padStart(2,'0');}
 function todayStr(){return new Date().toISOString().slice(0,10);}
-function getDow(ds){return new Date(ds+"T00:00:00").getDay();}   // 0=Sun,6=Sat
-function isWeekday(ds){const d=getDow(ds);return d>=1&&d<=5;}
+function currTime(){const n=new Date();return pad2(n.getHours())+':'+pad2(n.getMinutes());}
+function pm(t){if(!t)return 0;const[h,m]=t.split(':').map(Number);return h*60+(m||0);}
+function fmins(m){const h=Math.floor(m/60),mn=m%60;if(!h)return mn+'m';if(!mn)return h+'h';return h+'h '+mn+'m';}
+function fmtCur(n){return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtCurShort(n){return'$'+Math.round(n).toLocaleString('en-US');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getDow(ds){return new Date(ds+'T00:00:00').getDay();}
 function isWeekend(ds){const d=getDow(ds);return d===0||d===6;}
-function dowName(ds){return new Date(ds+"T00:00:00").toLocaleDateString("en-US",{weekday:"long"});}
-function dowShort(ds){return new Date(ds+"T00:00:00").toLocaleDateString("en-US",{weekday:"short"});}
-function fmtShort(d){const[y,m,dy]=d.split("-");return new Date(+y,+m-1,+dy).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});}
-function fmtFull(d){const[y,m,dy]=d.split("-");return new Date(+y,+m-1,+dy).toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});}
-function nextDateStr(ds){const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);}
-function prevDateStr(ds){const d=new Date(ds+"T00:00:00");d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
-function currTime(){const n=new Date();return`${pad2(n.getHours())}:${pad2(n.getMinutes())}`;}
+function isWeekday(ds){const d=getDow(ds);return d>=1&&d<=5;}
+function dowName(ds){return new Date(ds+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'});}
+function dowShort(ds){return new Date(ds+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'});}
+function fmtShort(ds){const[y,m,d]=ds.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+function fmtFull(ds){const[y,m,d]=ds.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
+function nextDate(ds){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);}
+function prevDate(ds){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
+function obPmQ(ds){return[0,1,2,3,4].includes(getDow(ds));}
+function ob24Info(ds){const nxt=nextDate(ds);return{d1q:isWeekday(ds),d2q:isWeekday(nxt),nxt};}
 
-// OB PM: generates $800 for following day only when done on Sun–Thu
-function obPmQualifies(ds){return[0,1,2,3,4].includes(getDow(ds));}
-
-// OB 24 base rate info: $800 for each weekday the shift covers (entered day + next day)
-function getOb24Base(ds){
-  const nextDs=nextDateStr(ds);
-  const d1q=isWeekday(ds),d2q=isWeekday(nextDs);
-  return{d1q,d2q,sameBase:d1q?800:0,nextBase:d2q?800:0,totalBase:(d1q?800:0)+(d2q?800:0),nextDs};
+// ── Business logic ────────────────────────────────────────────────
+function ancUnits(keys){
+  let bc=0,tot=0;
+  keys.forEach(k=>{const p=ANCS.find(a=>a.key===k);if(!p)return;if(p.isBlock){bc++;tot+=bc===1?p.units:p.units*0.5;}else tot+=p.units;});
+  return tot;
 }
-
-function calcUnitsForDate(start,end,ds){
-  const sm=pm(start),em=pm(end);if(em<=sm)return 0;
+function procDispUnits(key,sel){
+  const p=ANCS.find(a=>a.key===key);if(!p)return 0;if(!p.isBlock)return p.units;
+  const bb=sel.slice(0,sel.indexOf(key)).filter(k=>ANCS.find(a=>a.key===k)?.isBlock).length;
+  return bb===0?p.units:p.units*0.5;
+}
+function caseUnits(s,e,ds){
+  const sm=pm(s),em=pm(e);if(em<=sm)return 0;
   if(isWeekend(ds))return Math.ceil((em-sm)/15)*1.2;
-  const regM=Math.max(0,Math.min(em,CUTOFF)-sm);
-  const premM=Math.max(0,em-Math.max(sm,CUTOFF));
-  return(regM>0?Math.ceil(regM/15):0)+(premM>0?Math.ceil(premM/15)*1.2:0);
+  const reg=Math.max(0,Math.min(em,CUTOFF)-sm);
+  const prem=Math.max(0,em-Math.max(sm,CUTOFF));
+  return(reg>0?Math.ceil(reg/15):0)+(prem>0?Math.ceil(prem/15)*1.2:0);
 }
-
-function calcDayBreakdown(ds,allDays){
-  const d=allDays[ds];
-  let units=0,unitRev=0,baseRev=0;
-
-  // Cases
+function dayBreakdown(ds){
+  const d=S.days[ds];
+  let ctU=0,caU=0,saU=0,stU=0,hasBase=false;
+  const locums=parseFloat(d?.locumsPay)||0;
   const cases=d?.cases||[];
-  if(cases.length>0){
-    baseRev+=BASE_REV;
-    cases.forEach(c=>{const u=calcUnitsForDate(c.start,c.end,ds);units+=u;unitRev+=u*UNIT_VAL;});
-  }
-
-  // Stipends
-  const stips=d?.stipends||[];
-  stips.forEach(sk=>{
-    const s=STIP[sk];if(!s)return;
-    units+=s.units;unitRev+=s.units*UNIT_VAL;
-    if(sk==="OB_AM") baseRev+=800;
-    if(sk==="OB_24"&&isWeekday(ds)) baseRev+=800; // same-day base if weekday
+  if(cases.length){hasBase=true;cases.forEach(c=>{ctU+=caseUnits(c.start,c.end,ds);caU+=c.ancillaryUnits||0;});}
+  (d?.ancillary||[]).forEach(a=>saU+=a.units);
+  (d?.stipends||[]).forEach(sk=>{
+    const s=STIP[sk];if(!s)return;stU+=s.units;
+    if(s.alwaysBase)hasBase=true;
+    if(sk==='OB_PM'&&obPmQ(ds))hasBase=true;
+    if(sk==='OB_24'&&isWeekday(ds))hasBase=true;
   });
-
-  // Carry-overs from yesterday
-  const prev=prevDateStr(ds),pd=allDays[prev];
+  const prev=prevDate(ds),pd=S.days[prev];
   if(pd){
-    // OB_PM carry-over: qualifying Sun–Thu → +$800 next day
-    if((pd.stipends||[]).includes("OB_PM")&&obPmQualifies(prev)) baseRev+=800;
-    // OB_24 carry-over: if next day (today) is a weekday → +$800
-    if((pd.stipends||[]).includes("OB_24")&&isWeekday(ds)) baseRev+=800;
+    if((pd.stipends||[]).includes('OB_PM')&&obPmQ(prev))hasBase=true;
+    if((pd.stipends||[]).includes('OB_24')&&isWeekday(ds))hasBase=true;
   }
-
-  return{units,unitRev,baseRev,total:unitRev+baseRev};
+  const baseRev=hasBase?BASE_REV:0;
+  const totU=ctU+caU+saU+stU;
+  const unitRev=totU*UNIT_VAL;
+  return{ctU,caU,saU,stU,units:totU,unitRev,baseRev,locums,total:unitRev+baseRev+locums};
 }
-
-function hasOverlap(s,e,cases){
-  const ns=pm(s),ne=pm(e);
-  return cases.some(c=>pm(c.start)<ne&&ns<pm(c.end));
+function sumDays(dates){
+  return dates.reduce((a,dk)=>{
+    const b=dayBreakdown(dk);
+    a.ctU+=b.ctU;a.caU+=b.caU;a.saU+=b.saU;a.stU+=b.stU;
+    a.units+=b.units;a.unitRev+=b.unitRev;a.baseRev+=b.baseRev;
+    a.locums+=b.locums;a.total+=b.total;return a;
+  },{ctU:0,caU:0,saU:0,stU:0,units:0,unitRev:0,baseRev:0,locums:0,total:0});
 }
+function hasOverlap(s,e,cases){const ns=pm(s),ne=pm(e);return cases.some(c=>pm(c.start)<ne&&ns<pm(c.end));}
 
-function getWeekDates(ds){
-  const d=new Date(ds+"T00:00:00"),day=d.getDay(),diff=day===0?-6:1-day;
+// ── Date utilities ────────────────────────────────────────────────
+function fiscalStart(ds){
+  const d=new Date(ds+'T00:00:00'),day=d.getDate(),mo=d.getMonth(),yr=d.getFullYear();
+  return(day>=16?new Date(yr,mo,16):new Date(yr,mo-1,16)).toISOString().slice(0,10);
+}
+function fiscalInfo(startDs){
+  const start=new Date(startDs+'T00:00:00');
+  const end=new Date(start.getFullYear(),start.getMonth()+1,15);
+  const name=end.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const dates=[];const cur=new Date(start);
+  while(cur<=end){dates.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
+  const rs=start.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const re=end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  return{startDs,name:'Fiscal '+name,dates,range:rs+' – '+re};
+}
+function weekDates(ds){
+  const d=new Date(ds+'T00:00:00'),day=d.getDay(),diff=day===0?-6:1-day;
   const mon=new Date(d);mon.setDate(d.getDate()+diff);
   return Array.from({length:7},(_,i)=>{const dt=new Date(mon);dt.setDate(mon.getDate()+i);return dt.toISOString().slice(0,10);});
 }
-
-function getFiscalMonthStart(ds){
-  const d=new Date(ds+"T00:00:00"),day=d.getDate(),month=d.getMonth(),year=d.getFullYear();
-  return(day>=16?new Date(year,month,16):new Date(year,month-1,16)).toISOString().slice(0,10);
+function allFiscalStarts(){
+  const set=new Set([fiscalStart(todayStr())]);
+  Object.keys(S.days).forEach(dk=>set.add(fiscalStart(dk)));
+  return[...set].sort().reverse();
 }
 
-function getFiscalInfoFromStart(startDs){
-  const start=new Date(startDs+"T00:00:00");
-  const end=new Date(start.getFullYear(),start.getMonth()+1,15);
-  const name=end.toLocaleDateString("en-US",{month:"long",year:"numeric"});
-  const dates=[];const cur=new Date(start);
-  while(cur<=end){dates.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
-  return{
-    startDs,name:`Fiscal ${name}`,dates,endDs:end.toISOString().slice(0,10),
-    rangeStr:`${start.toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${end.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`
-  };
-}
-function getFiscalInfo(ds){return getFiscalInfoFromStart(getFiscalMonthStart(ds));}
+// ── State ─────────────────────────────────────────────────────────
+const S={
+  tab:'log',date:todayStr(),
+  days:{},
+  goal:{type:'units',value:''},
+  histMonth:fiscalStart(todayStr()),
+  showForm:false,
+  nc:{site:'PHSW',ancKeys:[],ancUnits:0,ancLabel:''},
+  overlapErr:false,timeErr:false,
+  ancModal:null,  // null | 'case' | 'only'
+  ancSel:[],
+};
 
-function getAllFiscalStarts(dayKeys){
-  const s=new Set([getFiscalMonthStart(todayStr())]);
-  dayKeys.forEach(dk=>s.add(getFiscalMonthStart(dk)));
-  return[...s].sort().reverse();
+function save(){
+  try{localStorage.setItem('anesthesia_days',JSON.stringify(S.days));localStorage.setItem('anesthesia_goal',JSON.stringify(S.goal));}catch(e){}
 }
-
-function sumBreakdowns(dates,allDays){
-  return dates.reduce((acc,dk)=>{
-    const b=calcDayBreakdown(dk,allDays);
-    acc.units+=b.units;acc.unitRev+=b.unitRev;acc.baseRev+=b.baseRev;acc.total+=b.total;
-    return acc;
-  },{units:0,unitRev:0,baseRev:0,total:0});
+function load(){
+  try{const d=localStorage.getItem('anesthesia_days');if(d)S.days=JSON.parse(d);const g=localStorage.getItem('anesthesia_goal');if(g)S.goal=JSON.parse(g);}catch(e){}
 }
+function getDay(ds){return S.days[ds]||{date:ds,cases:[],stipends:[],ancillary:[],locumsPay:''};}
+function setDay(ds,data){S.days[ds]=data;save();}
 
-function downloadCSV(fiscalInfo,allDays){
-  const rows=[["Date","Day","Site","Start","End","Duration","Units"]];
-  fiscalInfo.dates.forEach(ds=>{
-    const d=allDays[ds];if(!d||(d.cases||[]).length===0)return;
-    const[y,m,dy]=ds.split("-");
-    const dow=new Date(+y,+m-1,+dy).toLocaleDateString("en-US",{weekday:"long"});
+// ── CSV export ────────────────────────────────────────────────────
+function doExportCSV(monthStart){
+  const fi=fiscalInfo(monthStart);
+  const rows=[['Date','Day','Site','Start','End','Duration','Time Units','Ancillary','Anc Units','Total Units']];
+  fi.dates.forEach(ds=>{
+    const d=S.days[ds];if(!d)return;
+    const[yr,mo,dy]=ds.split('-');const dow=new Date(+yr,+mo-1,+dy).toLocaleDateString('en-US',{weekday:'long'});
     (d.cases||[]).forEach(c=>{
-      const u=calcUnitsForDate(c.start,c.end,ds);
-      rows.push([ds,dow,c.site,c.start,c.end,fmins(pm(c.end)-pm(c.start)),u.toFixed(2)]);
+      const tu=caseUnits(c.start,c.end,ds),au=c.ancillaryUnits||0;
+      rows.push([ds,dow,c.site,c.start,c.end,fmins(pm(c.end)-pm(c.start)),tu.toFixed(2),c.ancillaryLabel||'',au.toFixed(2),(tu+au).toFixed(2)]);
     });
+    (d.ancillary||[]).forEach(a=>rows.push([ds,dow,'Ancillary Only','—','—','—','0.00',a.label,a.units.toFixed(2),a.units.toFixed(2)]));
   });
-  if(rows.length===1){alert("No cases to export for this month.");return;}
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download=`cases_${fiscalInfo.name.replace(/\s+/g,"_")}.csv`;
+  if(rows.length===1){alert('No cases to export for this month.');return;}
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='cases_'+fi.name.replace(/\s+/g,'_')+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
-// ── Drum picker ───────────────────────────────────────────────────
-function DrumColumn({items,selectedIndex,colKey,onSelect}){
-  const ref=useRef(null);const timer=useRef(null);const lastIdx=useRef(selectedIndex);
-  useEffect(()=>{const el=ref.current;if(!el)return;setTimeout(()=>{if(el)el.scrollTop=selectedIndex*ITEM_H;},10);},[colKey]);
-  const handleScroll=useCallback(()=>{
-    const el=ref.current;if(!el)return;clearTimeout(timer.current);
-    timer.current=setTimeout(()=>{
-      if(!el)return;
-      const c=Math.max(0,Math.min(items.length-1,Math.round(el.scrollTop/ITEM_H)));
-      el.scrollTo({top:c*ITEM_H,behavior:"smooth"});
-      if(c!==lastIdx.current){lastIdx.current=c;onSelect(c);}
-    },120);
-  },[items.length,onSelect]);
-  const all=[...Array(PAD).fill(null),...items,...Array(PAD).fill(null)];
-  return(
-    <div className="drum-wrap" style={{height:ITEM_H*5}}>
-      <div className="drum-highlight" style={{top:PAD*ITEM_H,height:ITEM_H}}/>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:PAD*ITEM_H,zIndex:2,pointerEvents:"none",background:"linear-gradient(to bottom,rgba(242,242,247,1) 10%,transparent)"}}/>
-      <div style={{position:"absolute",bottom:0,left:0,right:0,height:PAD*ITEM_H,zIndex:2,pointerEvents:"none",background:"linear-gradient(to top,rgba(242,242,247,1) 10%,transparent)"}}/>
-      <div ref={ref} className="drum-scroll" onScroll={handleScroll}>
-        {all.map((v,i)=>{const ri=i-PAD,isSel=ri===selectedIndex;return(
-          <div key={i} className="drum-item" style={{height:ITEM_H,scrollSnapAlign:v!==null?"center":"none",fontSize:isSel?26:18,fontWeight:isSel?800:400,color:isSel?"#007aff":v!==null?"#aaa":"transparent"}}>{v??""}</div>
-        );})}
-      </div>
+// ── Render: Header ────────────────────────────────────────────────
+function renderHeader(){
+  const tabs=[['log','Case Log'],['stipend','Stipend'],['revenue','Revenue'],['history','History'],['analytics','Analytics']];
+  document.getElementById('hdr').innerHTML=`
+    <div class="hdr-top">
+      <div class="hdr-icon-wrap"><div class="hdr-icon">
+        <svg width="26" height="22" viewBox="0 0 26 22" fill="none"><polyline points="1,11 6,11 8,4 11,18 13,8 15,14 17,11 25,11" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div></div>
+      <div class="hdr-title">Anesthesia Tracker</div>
+      <div class="hdr-sub">${fmtFull(todayStr())}</div>
     </div>
-  );
+    <div class="tab-bar">${tabs.map(([k,l])=>`<button class="tab${S.tab===k?' active':''}" onclick="setTab('${k}')">${l}</button>`).join('')}</div>`;
 }
 
-function TimePicker({value,onChange,label,pickerKey}){
-  const parts=(value||"00:00").split(":");
-  const h=parseInt(parts[0])||0,m=parseInt(parts[1])||0;
-  const hours=Array.from({length:24},(_,i)=>pad2(i));
-  const mins=Array.from({length:60},(_,i)=>pad2(i));
-  return(
-    <div style={{flex:1}}>
-      <label className="form-label">{label}</label>
-      <div style={{textAlign:"center",fontSize:28,fontWeight:800,color:"#007aff",letterSpacing:"-0.4px",fontVariantNumeric:"tabular-nums",marginBottom:5}}>{pad2(h)}:{pad2(m)}</div>
-      <div style={{display:"flex",alignItems:"center",gap:4}}>
-        <DrumColumn colKey={`${pickerKey}-h`} items={hours} selectedIndex={h} onSelect={idx=>onChange(`${pad2(idx)}:${pad2(m)}`)}/>
-        <div style={{fontSize:24,fontWeight:800,color:"#007aff",flexShrink:0}}>:</div>
-        <DrumColumn colKey={`${pickerKey}-m`} items={mins} selectedIndex={m} onSelect={idx=>onChange(`${pad2(h)}:${pad2(idx)}`)}/>
+// ── Render: Case Log ──────────────────────────────────────────────
+function renderLog(){
+  const ds=S.date, d=getDay(ds), cases=d.cases||[], ancs=d.ancillary||[];
+  const wknd=isWeekend(ds), bd=dayBreakdown(ds);
+  const SITE_BTNS=SITES.map(s=>{const sc=SS[s],sel=S.nc.site===s;return`<button class="site-btn${sel?' sel':''}" onclick="setSite('${s}')" style="${sel?'background:'+sc.bg+';color:'+sc.c+';border-color:'+sc.c:''}">${s}</button>`;}).join('');
+  // time values: read from DOM if form is showing, else current time
+  const st=currTime(), et=currTime();
+
+  const CASE_LIST=cases.map(c=>{
+    const tu=caseUnits(c.start,c.end,ds),dur=pm(c.end)-pm(c.start),au=c.ancillaryUnits||0;
+    const sc=SS[c.site]||SS.PHSW,hasAfter=!wknd&&pm(c.end)>CUTOFF,hasAnc=au>0;
+    const anc_strip=hasAnc&&c.ancillaryLabel?`<div class="case-anc-strip">⬡ ${esc(c.ancillaryLabel)}</div>`:'';
+    const units_html=hasAnc
+      ?`<span style="color:#8e8e93">${tu.toFixed(1)} time</span><span>+</span><span style="color:#5856d6">${au.toFixed(2)} anc</span><span>=</span><span style="font-weight:700;color:#111">${(tu+au).toFixed(2)} units</span>`
+      :`<span>${tu.toFixed(1)} units</span>`;
+    return`<div class="case-row${hasAnc?' has-anc':''}">
+      <div class="case-row-top">
+        <span class="site-badge" style="background:${sc.bg};color:${sc.c}">${esc(c.site)}</span>
+        <div class="case-info">
+          <div class="case-time">${esc(c.start)} – ${esc(c.end)}</div>
+          <div class="case-meta"><span>${fmins(dur)}</span><span>·</span>${units_html}
+            ${hasAfter?'<span class="tag tag-orange">after-hours ×1.2</span>':''}
+            ${wknd?'<span class="tag tag-purple">weekend ×1.2</span>':''}
+          </div>
+        </div>
+        <button class="del-btn" onclick="delCase('${esc(c.id)}')">×</button>
+      </div>${anc_strip}</div>`;
+  }).join('');
+
+  const ANC_LIST=ancs.map(a=>`
+    <div class="anc-row">
+      <span class="anc-badge">Ancillary</span>
+      <div class="case-info">
+        <div class="case-time" style="font-size:13px">${esc(a.label)}</div>
+        <div class="case-meta"><span>${a.units.toFixed(2)} units</span></div>
       </div>
+      <button class="del-btn" onclick="delAncOnly('${esc(a.id)}')">×</button>
+    </div>`).join('');
+
+  const anc_lbl=S.nc.ancKeys.length>0
+    ?`✓ Ancillary: ${esc(S.nc.ancLabel)} (${S.nc.ancUnits.toFixed(2)} units)`
+    :'+ Ancillary procedures';
+
+  const FORM=S.showForm?`
+    <div class="card">
+      <label class="form-label">Site</label>
+      <div class="site-btns">${SITE_BTNS}</div>
+      <div class="time-row">
+        <div class="time-field"><label>Start time</label><input type="time" id="inp-start" value="${st}" onchange="updatePreview()"></div>
+        <div class="time-field"><label>End time</label><input type="time" id="inp-end" value="${et}" onchange="updatePreview()"></div>
+      </div>
+      <button class="btn-anc-inline${S.nc.ancKeys.length>0?' has':''}" onclick="openAnc('case')">${anc_lbl}</button>
+      ${S.timeErr?'<div class="warn-box">End time must be after start time</div>':''}
+      ${S.overlapErr?'<div class="warn-box">This case overlaps with an existing case — adjust the times</div>':''}
+      <div id="preview-box"></div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="addCase()" id="add-case-btn">Add case</button>
+        <button class="btn btn-gray btn-sm" onclick="cancelForm()">Cancel</button>
+      </div>
+    </div>`:
+    `<button class="btn btn-outline" onclick="showForm()" style="margin-top:${cases.length>0||ancs.length>0?'8px':'0'}">+ Add case</button>
+     <button class="btn btn-purple" onclick="openAnc('only')" style="margin-top:8px">Ancillary only</button>`;
+
+  return`
+    <div style="margin-bottom:10px"><input type="date" value="${S.date}" onchange="setDate(this.value)"></div>
+    ${wknd?`<div class="weekend-banner">Weekend — all cases are ×1.2 units (${dowName(ds)})</div>`:''}
+    <div class="metrics-grid">
+      <div class="metric"><div class="metric-lbl">Cases</div><div class="metric-val">${cases.length}</div></div>
+      <div class="metric"><div class="metric-lbl">Total units</div><div class="metric-val">${bd.units.toFixed(1)}</div>${bd.caU>0?`<div class="metric-sub">+${bd.caU.toFixed(2)} ancillary</div>`:''}</div>
     </div>
-  );
+    ${cases.length>0||ancs.length>0?`<div class="section-title">Cases — ${fmtShort(ds)}</div>`:''}
+    ${CASE_LIST}
+    ${ancs.length>0?`<div class="section-title" style="margin-top:10px">Ancillary Only — ${fmtShort(ds)}</div>`:''}
+    ${ANC_LIST}
+    ${cases.length===0&&ancs.length===0&&!S.showForm?'<div class="empty">No cases logged yet<br><span style="font-size:12px">Tap "Add case" to begin</span></div>':''}
+    ${FORM}`;
 }
 
-// ── Analytics Chart ───────────────────────────────────────────────
-function ProgressChart({fiscalInfo,allDays,goalType,goalValue}){
-  const goal=parseFloat(goalValue)||0;
-  const today=todayStr();
-  const{dates}=fiscalInfo,N=dates.length;
-  let running=0;
-  const series=[];
-  dates.forEach((ds,i)=>{if(ds<=today){const b=calcDayBreakdown(ds,allDays);running+=goalType==="units"?b.units:b.total;series.push({i,v:running});}});
-  const actual=series.length>0?series[series.length-1].v:0;
-  const maxVal=Math.max(goal*1.15,actual*1.15,1);
-  const W=330,H=170,ML=54,MR=12,MT=12,MB=28,PW=W-ML-MR,PH=H-MT-MB;
-  const X=i=>ML+(N>1?i/(N-1):0.5)*PW;
-  const Y=v=>MT+PH-(v/maxVal)*PH;
-  const fmtY=v=>goalType==="units"?v.toFixed(0):(v>=1000?`$${(v/1000).toFixed(0)}k`:`$${v.toFixed(0)}`);
-  const actualPts=series.map(p=>`${X(p.i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(" ");
-  const todayPt=series.length>0?series[series.length-1]:null;
-  const xLabels=[{i:0,l:dates[0]?dates[0].slice(5):""},{i:Math.floor((N-1)/2),l:dates[Math.floor((N-1)/2)]?dates[Math.floor((N-1)/2)].slice(5):""},{i:N-1,l:dates[N-1]?dates[N-1].slice(5):""}];
-  return(
-    <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto",display:"block"}}>
-      {[0,PH/3,PH*2/3,PH].map((yOff,k)=>(
-        <line key={k} x1={ML} y1={MT+yOff} x2={ML+PW} y2={MT+yOff} stroke="#f2f2f7" strokeWidth="1"/>
-      ))}
-      {goal>0&&<line x1={X(0)} y1={Y(0)} x2={X(N-1)} y2={Y(goal)} stroke="#34c759" strokeWidth="2" strokeDasharray="6,4" opacity="0.9"/>}
-      {series.length>1&&<polyline points={actualPts} fill="none" stroke="#007aff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>}
-      {series.length===1&&<circle cx={X(series[0].i)} cy={Y(series[0].v)} r="4" fill="#007aff"/>}
-      {todayPt&&<circle cx={X(todayPt.i)} cy={Y(todayPt.v)} r="5" fill="#007aff" stroke="#fff" strokeWidth="2"/>}
-      <line x1={ML} y1={MT} x2={ML} y2={MT+PH} stroke="#d1d1d6" strokeWidth="1"/>
-      <line x1={ML} y1={MT+PH} x2={ML+PW} y2={MT+PH} stroke="#d1d1d6" strokeWidth="1"/>
-      {goal>0&&[0,goal/2,goal].filter(v=>v>=0).map((v,k)=>(
-        <text key={k} x={ML-5} y={Y(v)+4} textAnchor="end" fontSize="10" fill="#8e8e93">{fmtY(v)}</text>
-      ))}
-      <text x={ML-5} y={Y(0)+4} textAnchor="end" fontSize="10" fill="#8e8e93">0</text>
-      {xLabels.map((xl,k)=>(
-        <text key={k} x={X(xl.i)} y={H-6} textAnchor="middle" fontSize="9" fill="#8e8e93">{xl.l}</text>
-      ))}
-      {goal>0&&<text x={X(N-1)-3} y={Y(goal)-7} textAnchor="end" fontSize="9" fill="#34c759" fontWeight="600">Goal</text>}
-      {todayPt&&actual>0&&<text x={X(todayPt.i)} y={Y(actual)-9} textAnchor="middle" fontSize="9" fill="#007aff" fontWeight="600">{fmtY(actual)}</text>}
-    </svg>
-  );
+// ── Render: Stipend ───────────────────────────────────────────────
+function renderStipend(){
+  const ds=S.date,d=getDay(ds),stips=d.stipends||[];
+  const ob24=ob24Info(ds);
+
+  const STIP_CARDS=STIP_KEYS.map(key=>{
+    const s=STIP[key],sel=stips.includes(key);
+    const isObPm=key==='OB_PM',isOb24=key==='OB_24';
+    const pmSameDay=isObPm&&obPmQ(ds);
+    let dispVal=s.units*UNIT_VAL+(s.alwaysBase?800:0);
+    if(isOb24)dispVal+=ob24.d1q?800:0;
+    if(isObPm)dispVal+=pmSameDay?800:0;
+    const hasBase=s.alwaysBase||(isObPm&&pmSameDay)||(isOb24&&ob24.d1q);
+    const base_badge=hasBase?`<span class="base-note">+$800 base</span>`:isObPm&&!pmSameDay?`<span class="base-note-gray">no base today</span>`:'';
+    const ob24_row=isOb24?`<div class="ob24-row">
+      <span style="color:#8e8e93;font-size:11px">Base rate:</span>
+      <span class="ob24-pill ${ob24.d1q?'yes':'no'}">${dowShort(ds)} ${ob24.d1q?'$800':'—'}</span>
+      <span style="color:#8e8e93;font-size:11px">+</span>
+      <span class="ob24-pill ${ob24.d2q?'yes':'no'}">${dowShort(ob24.nxt)} ${ob24.d2q?'$800':'—'}</span>
+      <span style="color:#8e8e93;font-size:11px">= <strong style="color:${ob24.d1q||ob24.d2q?'#34c759':'#b91c1c'}">${fmtCur((ob24.d1q?800:0)+(ob24.d2q?800:0))}</strong></span>
+    </div>`:'';
+    const ob24_carry=isOb24&&sel&&ob24.d2q?`<div class="info-box info-green">Carries $800 base to ${fmtShort(ob24.nxt)} (${dowName(ob24.nxt)})</div>`:'';
+    const pm_note=isObPm?`<div class="info-box ${pmSameDay?'info-green':'info-orange'}">${pmSameDay?'$800 base today ('+dowName(ds)+') · also credits $800 to '+fmtShort(nextDate(ds)):'No $800 base today ('+dowName(ds)+') — only applies Sun–Thu'}</div>`:'';
+    return`<div class="stip-card${sel?' sel':''}" onclick="toggleStip('${key}')">
+      <div class="stip-card-top">
+        <div><div class="stip-name">${s.label}${base_badge}</div><div class="stip-desc">${s.desc}</div></div>
+        <div class="stip-check${sel?' on':''}">${sel?'✓':''}</div>
+      </div>
+      <div class="stip-val">${s.units} units · ${fmtCur(dispVal)}${hasBase?'<span style="font-size:11px;font-weight:400;color:#8e8e93"> (units + base)</span>':''}</div>
+      ${ob24_row}${pm_note}${ob24_carry}
+    </div>`;
+  }).join('');
+
+  const lp=parseFloat(d.locumsPay)||0;
+  const LOCUMS=`
+    <div class="section-title" style="margin-top:6px">Locums</div>
+    <div class="locums-card${lp>0?' active':''}">
+      <div class="stip-card-top">
+        <div><div class="stip-name locums" style="color:${lp>0?'#15803d':'#111'}">Locums</div><div class="stip-desc">Manually enter locums shift pay for this day</div></div>
+        <div class="stip-check${lp>0?' on':''}\" style="${lp>0?'background:#34c759;border-color:#34c759':''}">${lp>0?'$':''}</div>
+      </div>
+      <div class="locums-dollar-wrap">
+        <span class="locums-dollar-sym">$</span>
+        <input type="number" min="0" step="0.01" placeholder="0.00" class="locums-inp" value="${esc(d.locumsPay||'')}" oninput="setLocums(this.value)">
+      </div>
+      ${lp>0?`<div class="info-box info-green" style="margin-top:8px">${fmtCur(lp)} locums revenue added to today</div>`:''}
+    </div>`;
+
+  // Summary
+  let sumHtml='';
+  const hasAny=stips.length>0||lp>0;
+  if(hasAny){
+    const rows=stips.map(key=>{
+      const s=STIP[key];if(!s)return'';
+      const isP=key==='OB_PM';const isO=key==='OB_24';
+      let v=s.units*UNIT_VAL+(s.alwaysBase?800:0);
+      if(isP)v+=obPmQ(ds)?800:0;
+      if(isO)v+=ob24.d1q?800:0;
+      return`<div class="rev-row"><span class="rv-lbl" style="color:#111;font-weight:600">${s.label}</span><span class="rv-val" style="color:#34c759">${fmtCur(v)}</span></div>`;
+    }).join('');
+    const lrow=lp>0?`<div class="rev-row"><span class="rv-lbl" style="color:#15803d;font-weight:600">Locums</span><span class="rv-val" style="color:#34c759">${fmtCur(lp)}</span></div>`:'';
+    const pm_carry=stips.includes('OB_PM')&&obPmQ(ds)?`<div class="rev-row"><span class="rv-lbl">OB PM +$800 → ${fmtShort(nextDate(ds))}</span><span class="rv-val" style="color:#34c759">$800.00</span></div>`:'';
+    const ob24_carry=stips.includes('OB_24')&&ob24.d2q?`<div class="rev-row"><span class="rv-lbl">OB 24 +$800 → ${fmtShort(ob24.nxt)}</span><span class="rv-val" style="color:#34c759">$800.00</span></div>`:'';
+    const bd=dayBreakdown(ds);
+    const total=bd.unitRev+bd.baseRev+lp;
+    sumHtml=`<div class="stip-sum">
+      <div class="section-title" style="margin-bottom:8px">Today's summary</div>
+      ${rows}${lrow}${pm_carry}${ob24_carry}
+      <div style="border-top:1px solid #f2f2f7;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between">
+        <span style="font-weight:700;color:#111;font-size:15px">Total</span>
+        <span style="color:#34c759;font-weight:800;font-size:15px">${fmtCur(total)}</span>
+      </div>
+    </div>`;
+  }
+
+  return`
+    <div style="margin-bottom:12px"><input type="date" value="${S.date}" onchange="setDate(this.value)"></div>
+    <div class="section-title">Stipends — ${fmtShort(ds)}</div>
+    ${STIP_CARDS}${LOCUMS}
+    ${sumHtml}
+    ${!hasAny?'<div class="empty" style="padding-top:12px">No stipends or locums logged<br><span style="font-size:12px">Tap a stipend or enter locums pay above</span></div>':''}`;
 }
 
-// ── Storage ───────────────────────────────────────────────────────
-const MEM={};
-const DB={
-  get:async(k)=>{try{const r=await window.storage.get(k);return r;}catch{return MEM[k]?{value:MEM[k]}:null;}},
-  set:async(k,v)=>{try{await window.storage.set(k,v);}catch{}MEM[k]=v;},
-  list:async(p)=>{try{return await window.storage.list(p);}catch{return{keys:Object.keys(MEM).filter(k=>k.startsWith(p))};}},
-};
-
-// ── App ───────────────────────────────────────────────────────────
-function App(){
-  const[tab,setTab]=useState("log");
-  const[date,setDate]=useState(todayStr());
-  const[days,setDays]=useState({});
-  const[loaded,setLoaded]=useState(false);
-  const[showForm,setShowForm]=useState(false);
-  const[overlapErr,setOverlapErr]=useState(false);
-  const[formKey,setFormKey]=useState(0);
-  const[nc,setNc]=useState({site:"PHSW",start:currTime(),end:currTime()});
-  const[hist,setHist]=useState([]);
-  const[histMonthStart,setHistMonthStart]=useState(getFiscalMonthStart(todayStr()));
-  const[goalType,setGoalType]=useState("units");
-  const[goalValue,setGoalValue]=useState("");
-
-  useEffect(()=>{
-    (async()=>{
-      try{
-        const keys=await DB.list("anesthesia:day:");const d={};
-        for(const k of(keys?.keys||[])){const r=await DB.get(k);if(r?.value)d[k.replace("anesthesia:day:","")]=JSON.parse(r.value);}
-        setDays(d);setHist(Object.keys(d).sort().reverse());
-      }catch(e){}
-      try{const gr=await DB.get("anesthesia:goal");if(gr?.value){const g=JSON.parse(gr.value);setGoalType(g.type||"units");setGoalValue(g.value||"");}}catch(e){}
-      setLoaded(true);
-    })();
-  },[]);
-
-  const saveDay=useCallback(async(dk,data)=>{
-    await DB.set(`anesthesia:day:${dk}`,JSON.stringify(data));
-    setDays(p=>({...p,[dk]:data}));
-    setHist(p=>[...new Set([dk,...p])].sort().reverse());
-  },[]);
-  const saveGoal=useCallback(async(type,val)=>{await DB.set("anesthesia:goal",JSON.stringify({type,value:val}));},[]);
-
-  const cur=days[date]||{date,cases:[],stipends:[]};
-  const cases=cur.cases||[];
-  const stipends=cur.stipends||[];
-  const wknd=isWeekend(date);
-  const totalCaseUnits=cases.reduce((s,c)=>s+calcUnitsForDate(c.start,c.end,date),0);
-
-  const addCase=async()=>{
-    if(pm(nc.end)<=pm(nc.start)){setOverlapErr(false);return;}
-    if(hasOverlap(nc.start,nc.end,cases)){setOverlapErr(true);return;}
-    setOverlapErr(false);
-    await saveDay(date,{...cur,cases:[...cases,{id:Date.now()+"",site:nc.site,start:nc.start,end:nc.end}]});
-    const t=currTime();setNc(p=>({...p,start:t,end:t}));setFormKey(k=>k+1);setShowForm(false);
-  };
-  const rmCase=async(id)=>saveDay(date,{...cur,cases:cases.filter(c=>c.id!==id)});
-  const toggleStipend=async(key)=>{
-    const c2=days[date]||{date,cases:[],stipends:[]};const st=c2.stipends||[];
-    await saveDay(date,{...c2,stipends:st.includes(key)?st.filter(k=>k!==key):[...st,key]});
-  };
-
-  const hasTimeErr=nc.start&&nc.end&&pm(nc.end)<=pm(nc.start);
-  const prevUnits=!hasTimeErr&&nc.start&&nc.end&&pm(nc.end)>pm(nc.start)?calcUnitsForDate(nc.start,nc.end,date):null;
-  const prevDur=prevUnits!==null?pm(nc.end)-pm(nc.start):null;
-
-  // Revenue aggregates
+// ── Render: Revenue ───────────────────────────────────────────────
+function renderRevenue(){
   const td=todayStr();
-  const todayBD=calcDayBreakdown(td,days);
-  const weekDates=getWeekDates(td);
-  const weekBD=sumBreakdowns(weekDates,days);
-  const fiscalInfo=getFiscalInfo(td);
-  const monthBD=sumBreakdowns(fiscalInfo.dates,days);
+  const todB=dayBreakdown(td);
+  const wk=weekDates(td),wkB=sumDays(wk);
+  const fi=fiscalInfo(fiscalStart(td)),moB=sumDays(fi.dates);
+  const baseDaysWk=wk.filter(dk=>dayBreakdown(dk).baseRev>0).length;
+  const baseDaysMo=fi.dates.filter(dk=>dayBreakdown(dk).baseRev>0).length;
 
-  // History
-  const allFiscalStarts=getAllFiscalStarts(hist);
-  const histFiscalInfo=getFiscalInfoFromStart(histMonthStart);
-  const histMonthDays=histFiscalInfo.dates.filter(dk=>days[dk]&&((days[dk].cases||[]).length>0||(days[dk].stipends||[]).length>0)).sort().reverse();
-  const histMonthBD=sumBreakdowns(histFiscalInfo.dates,days);
-  const histMonthCases=histFiscalInfo.dates.reduce((s,dk)=>s+(days[dk]?.cases||[]).length,0);
-  const curYear=new Date().getFullYear();
-  const yearlyRev=hist.filter(dk=>dk.startsWith(String(curYear))).reduce((s,dk)=>s+calcDayBreakdown(dk,days).total,0);
+  function revTable(b,baseCount){
+    return`<table class="rev-tbl">
+      <tr><td>Unit revenue</td><td>${b.units.toFixed(1)} units × $${UNIT_VAL}</td><td>${fmtCur(b.unitRev)}</td></tr>
+      <tr><td>Base rate</td><td style="font-size:11px">${b.baseRev>0?(baseCount||1)+' × $800':'—'}</td><td>${fmtCur(b.baseRev)}</td></tr>
+      ${b.locums>0?`<tr><td>Locums</td><td></td><td style="color:#15803d">${fmtCur(b.locums)}</td></tr>`:''}
+      <tr class="total-row"><td colspan="2">Total</td><td style="color:#34c759">${fmtCur(b.total)}</td></tr>
+    </table>`;
+  }
 
-  // Analytics
-  const analyticsFiscalInfo=getFiscalInfo(td);
-  const analyticsBD=sumBreakdowns(analyticsFiscalInfo.dates.filter(dk=>dk<=td),days);
-  const actualVal=goalType==="units"?analyticsBD.units:analyticsBD.total;
-  const goal=parseFloat(goalValue)||0;
-  const daysInMonth=analyticsFiscalInfo.dates.length;
-  const daysElapsed=analyticsFiscalInfo.dates.filter(dk=>dk<=td).length;
-  const daysLeft=Math.max(0,daysInMonth-daysElapsed);
-  const pct=goal>0?Math.min(100,(actualVal/goal*100)):0;
-  const remaining=Math.max(0,goal-actualVal);
-  const dailyPace=daysElapsed>0?actualVal/daysElapsed:0;
-  const projected=dailyPace*daysInMonth;
-  const neededPerDay=daysLeft>0?remaining/daysLeft:0;
-  const fmtGoal=v=>goalType==="units"?v.toFixed(1)+" units":fmtCur(v);
+  // Week detail
+  const wkDays=wk.filter(dk=>S.days[dk]&&((S.days[dk].cases||[]).length>0||(S.days[dk].stipends||[]).length>0||(S.days[dk].ancillary||[]).length>0||(S.days[dk].locumsPay>0)));
+  const wkDetail=wkDays.length>0?`<div class="rev-detail">${wkDays.map(dk=>{
+    const b=dayBreakdown(dk);const stips=(S.days[dk].stipends||[]).map(k=>STIP[k]?.label).filter(Boolean);const hasL=b.locums>0;
+    return`<div class="rev-row"><span class="rv-lbl">${fmtShort(dk)}</span>
+      <span class="rv-val" style="display:flex;gap:5px;align-items:center">
+        ${stips.map(l=>`<span class="stip-tag">${l}</span>`).join('')}
+        ${hasL?'<span class="locums-tag">Locums</span>':''}
+        <span style="color:#8e8e93;font-weight:400">${b.units.toFixed(1)}u</span>${fmtCur(b.total)}
+      </span></div>`;
+  }).join('')}</div>`:'';
 
-  if(!loaded)return<div style={{textAlign:"center",padding:"80px 0",color:"#8e8e93",fontSize:17}}>Loading...</div>;
+  const[wy,wm,wd]=wk[0].split('-'),[ey,em,edd]=wk[6].split('-');
+  const wkRange=new Date(+wy,+wm-1,+wd).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+new Date(+ey,+em-1,+edd).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
-  // Stipend summary total for selected date (same-day values only; carry-overs shown separately)
-  const stipSameDayTotal=stipends.reduce((s,k)=>{
-    const st=STIP[k];if(!st)return s;
-    let v=st.units*UNIT_VAL;
-    if(k==="OB_AM")v+=800;
-    if(k==="OB_24")v+=getOb24Base(date).sameBase;
-    return s+v;
-  },0);
-
-  return(
-    <div className="app">
-      {/* ── Header ── */}
-      <div className="header">
-        <div className="header-icon-wrap">
-          <div className="header-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-              <path d="M10 2h4v7h7v4h-7v7h-4v-7H3v-4h7z"/>
-            </svg>
-          </div>
-        </div>
-        <div className="header-title">Anesthesia Tracker</div>
-        <div className="header-sub">{fmtFull(todayStr())}</div>
-        <div className="tab-bar">
-          {[["log","Case Log"],["stipend","Stipend"],["revenue","Revenue"],["history","History"],["analytics","Analytics"]].map(([k,l])=>(
-            <button key={k} className={`tab${tab===k?" active":""}`} onClick={()=>setTab(k)}>{l}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* ══ CASE LOG ══ */}
-      {tab==="log"&&(
-        <div className="content">
-          <div style={{marginBottom:10}}><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          {wknd&&<div className="weekend-banner">Weekend — all cases are ×1.2 units ({dowName(date)})</div>}
-          <div className="metrics-grid">
-            <div className="metric"><div className="metric-label">Cases</div><div className="metric-value">{cases.length}</div></div>
-            <div className="metric"><div className="metric-label">Case units</div><div className="metric-value">{totalCaseUnits.toFixed(1)}</div>{wknd&&<div className="metric-sub">Weekend ×1.2</div>}</div>
-          </div>
-          {cases.length>0&&<div className="section-title">Cases — {fmtShort(date)}</div>}
-          {cases.map(c=>{
-            const u=calcUnitsForDate(c.start,c.end,date),dur=pm(c.end)-pm(c.start);
-            const sc=SITE_STYLE[c.site]||SITE_STYLE.PHSW,hasAfter=!wknd&&pm(c.end)>CUTOFF;
-            return(
-              <div key={c.id} className="case-row">
-                <span className="site-badge" style={{background:sc.bg,color:sc.color}}>{c.site}</span>
-                <div className="case-info">
-                  <div className="case-time">{c.start} – {c.end}</div>
-                  <div className="case-meta">
-                    <span>{fmins(dur)}</span><span>·</span><span>{u.toFixed(1)} units</span>
-                    {hasAfter&&<span className="tag tag-orange">after-hours ×1.2</span>}
-                    {wknd&&<span className="tag tag-purple">weekend ×1.2</span>}
-                  </div>
-                </div>
-                <button className="del-btn" onClick={()=>rmCase(c.id)}>×</button>
-              </div>
-            );
-          })}
-          {cases.length===0&&!showForm&&<div className="empty">No cases logged yet<br/><span style={{fontSize:12}}>Tap "Add case" to begin</span></div>}
-          {showForm&&(
-            <div className="add-form">
-              <div style={{marginBottom:13}}>
-                <label className="form-label">Site</label>
-                <div className="site-btns">
-                  {SITES.map(s=>{const sc=SITE_STYLE[s],sel=nc.site===s;return(
-                    <button key={s} className={`site-btn${sel?" sel":""}`} onClick={()=>setNc(p=>({...p,site:s}))} style={sel?{background:sc.bg,color:sc.color,borderColor:sc.color}:{}}>{s}</button>
-                  );})}
-                </div>
-              </div>
-              <div style={{display:"flex",gap:14,marginBottom:12}}>
-                <TimePicker label="Start time" value={nc.start} onChange={v=>{setNc(p=>({...p,start:v}));setOverlapErr(false);}} pickerKey={`s${formKey}`}/>
-                <TimePicker label="End time" value={nc.end} onChange={v=>{setNc(p=>({...p,end:v}));setOverlapErr(false);}} pickerKey={`e${formKey}`}/>
-              </div>
-              {hasTimeErr&&<div className="warning-text">End time must be after start time</div>}
-              {overlapErr&&<div className="warning-text">This case overlaps with an existing case — adjust the times</div>}
-              {prevUnits!==null&&!overlapErr&&(
-                <div className="preview-box">
-                  <strong>{fmins(prevDur)}</strong> · <strong>{prevUnits.toFixed(1)} units</strong>
-                  {wknd&&<span style={{color:"#6d28d9"}}> — weekend ×1.2</span>}
-                  {!wknd&&pm(nc.end)>CUTOFF&&<span style={{color:"#856404"}}> — after-hours ×1.2</span>}
-                </div>
-              )}
-              <div className="btn-row">
-                <button className="btn-primary" onClick={addCase} disabled={hasTimeErr} style={{flex:1}}>Add case</button>
-                <button className="btn-secondary" onClick={()=>{setShowForm(false);setOverlapErr(false);}}>Cancel</button>
-              </div>
-            </div>
-          )}
-          {!showForm&&<button className="btn-add" onClick={()=>setShowForm(true)} style={{marginTop:cases.length>0?8:0}}>+ Add case</button>}
-        </div>
-      )}
-
-      {/* ══ STIPEND ══ */}
-      {tab==="stipend"&&(
-        <div className="content">
-          <div style={{marginBottom:12}}><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          <div className="section-title">Stipends — {fmtShort(date)}</div>
-          {STIP_KEYS.map(key=>{
-            const s=STIP[key],sel=stipends.includes(key);
-            const isObAm=key==="OB_AM",isObPm=key==="OB_PM",isOb24=key==="OB_24";
-            // Compute display value (same-day only for carry-over types)
-            let dispVal=s.units*UNIT_VAL;
-            if(isObAm)dispVal+=800;
-            // OB_24 same-day base
-            const ob24=isOb24?getOb24Base(date):null;
-            if(isOb24)dispVal+=ob24.sameBase;
-
-            return(
-              <div key={key} className={`stipend-card${sel?" selected":""}`} onClick={()=>toggleStipend(key)}>
-                <div className="stipend-card-top">
-                  <div>
-                    <div className="stipend-name">{s.label}</div>
-                    <div className="stipend-detail">{s.desc}</div>
-                  </div>
-                  <div className={`stipend-check${sel?" on":""}`}>{sel?"✓":""}</div>
-                </div>
-                <div className="stipend-value">
-                  {s.units} units · {fmtCur(dispVal)}
-                  {isObAm&&<span style={{fontSize:11,fontWeight:500,color:"#8e8e93"}}> (incl. $800 base)</span>}
-                </div>
-
-                {/* OB 24: always show weekday base breakdown */}
-                {isOb24&&(
-                  <div className="ob24-base-row" style={{marginTop:5}}>
-                    <span style={{color:"#8e8e93",fontSize:11}}>Base rate:</span>
-                    <span className={`ob24-day-pill ${ob24.d1q?"yes":"no"}`}>{dowShort(date)} {ob24.d1q?"$800":"-"}</span>
-                    <span style={{color:"#8e8e93",fontSize:11}}>+</span>
-                    <span className={`ob24-day-pill ${ob24.d2q?"yes":"no"}`}>{dowShort(ob24.nextDs)} {ob24.d2q?"$800":"-"}</span>
-                    <span style={{color:"#8e8e93",fontSize:11}}>= <strong style={{color:ob24.totalBase>0?"#34c759":"#b91c1c"}}>{fmtCur(ob24.totalBase)}</strong></span>
-                  </div>
-                )}
-
-                {/* OB PM: qualifying day note (only when selected) */}
-                {isObPm&&sel&&(
-                  <div className={`stipend-note ${obPmQualifies(date)?"green":"orange"}`}>
-                    {obPmQualifies(date)
-                      ?`Generates $800 base for ${fmtShort(nextDateStr(date))} (${dowName(nextDateStr(date))})`
-                      :`No base rate generated — OB PM on ${dowName(date)} does not qualify`}
-                  </div>
-                )}
-
-                {/* OB 24: when selected show next-day credit if applicable */}
-                {isOb24&&sel&&ob24.d2q&&(
-                  <div className="stipend-note green">
-                    Also credits $800 base to {fmtShort(ob24.nextDs)} ({dowName(ob24.nextDs)})
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {stipends.length>0&&(
-            <div className="stip-summary">
-              <div className="section-title" style={{marginBottom:8}}>Today's stipend summary</div>
-              {stipends.map(k=>{
-                const s=STIP[k];if(!s)return null;
-                let v=s.units*UNIT_VAL;
-                if(k==="OB_AM")v+=800;
-                if(k==="OB_24")v+=getOb24Base(date).sameBase;
-                return(
-                  <div key={k} className="rev-row" style={{fontSize:14}}>
-                    <span style={{color:"#111",fontWeight:600}}>{s.label}</span>
-                    <span style={{color:"#34c759"}}>{fmtCur(v)}</span>
-                  </div>
-                );
-              })}
-              {/* Carry-over credits to tomorrow */}
-              {stipends.includes("OB_PM")&&obPmQualifies(date)&&(
-                <div className="rev-row" style={{fontSize:13}}>
-                  <span style={{color:"#8e8e93"}}>OB PM +$800 → {fmtShort(nextDateStr(date))}</span>
-                  <span style={{color:"#34c759"}}>$800.00</span>
-                </div>
-              )}
-              {stipends.includes("OB_24")&&getOb24Base(date).d2q&&(
-                <div className="rev-row" style={{fontSize:13}}>
-                  <span style={{color:"#8e8e93"}}>OB 24 +$800 → {fmtShort(getOb24Base(date).nextDs)}</span>
-                  <span style={{color:"#34c759"}}>$800.00</span>
-                </div>
-              )}
-              <div style={{borderTop:"1px solid #f2f2f7",marginTop:6,paddingTop:8}}>
-                <div className="rev-row" style={{fontSize:15}}>
-                  <span style={{fontWeight:700,color:"#111"}}>Same-day total</span>
-                  <span style={{color:"#34c759",fontWeight:800}}>{fmtCur(stipSameDayTotal)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-          {stipends.length===0&&<div className="empty" style={{paddingTop:16}}>No stipends selected<br/><span style={{fontSize:12}}>Tap a stipend above to add it</span></div>}
-        </div>
-      )}
-
-      {/* ══ REVENUE ══ */}
-      {tab==="revenue"&&(
-        <div className="content">
-          <div className="rev-hero">
-            <div className="rev-hero-label">Today — {fmtShort(td)}</div>
-            <div className="rev-hero-value">{fmtCur(todayBD.total)}</div>
-          </div>
-          <div className="rev-card" style={{marginTop:-4,marginBottom:12}}>
-            <table className="rev-table" style={{width:"100%"}}>
-              <tbody>
-                <tr><td>Unit revenue</td><td>{todayBD.units.toFixed(1)} units × ${UNIT_VAL}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(todayBD.unitRev)}</td></tr>
-                <tr><td>Base rate</td><td style={{fontSize:11}}>{todayBD.baseRev>0?`${Math.round(todayBD.baseRev/800)} × $800`:"-"}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(todayBD.baseRev)}</td></tr>
-                <tr className="total-row"><td colSpan="2">Total</td><td style={{textAlign:"right",fontWeight:800,color:"#34c759",fontSize:15}}>{fmtCur(todayBD.total)}</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          {(()=>{
-            const[wy,wm,wd]=weekDates[0].split("-"),[ey,em,ed]=weekDates[6].split("-");
-            const wr=`${new Date(+wy,+wm-1,+wd).toLocaleDateString("en-US",{month:"short",day:"numeric"})} – ${new Date(+ey,+em-1,+ed).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}`;
-            const workedDays=weekDates.filter(dk=>days[dk]&&((days[dk].cases||[]).length>0||(days[dk].stipends||[]).length>0));
-            return(
-              <div className="rev-card">
-                <div className="rev-card-title">This week</div>
-                <div className="rev-card-range">{wr}</div>
-                <table className="rev-table">
-                  <tbody>
-                    <tr><td>Unit revenue</td><td>{weekBD.units.toFixed(1)} units × ${UNIT_VAL}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(weekBD.unitRev)}</td></tr>
-                    <tr><td>Base rate</td><td style={{fontSize:11}}>{weekBD.baseRev>0?`${Math.round(weekBD.baseRev/800)} × $800`:"-"}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(weekBD.baseRev)}</td></tr>
-                    <tr className="total-row"><td colSpan="2">Total ({workedDays.length} day{workedDays.length!==1?"s":""})</td><td style={{textAlign:"right",fontWeight:800,color:"#34c759",fontSize:15}}>{fmtCur(weekBD.total)}</td></tr>
-                  </tbody>
-                </table>
-                {workedDays.length>0&&(
-                  <div className="rev-detail">
-                    {workedDays.map(dk=>{
-                      const b=calcDayBreakdown(dk,days);
-                      const stips=(days[dk].stipends||[]).map(k=>STIP[k]?.label).filter(Boolean);
-                      return(
-                        <div key={dk} className="rev-row">
-                          <span>{fmtShort(dk)}</span>
-                          <span style={{display:"flex",gap:5,alignItems:"center"}}>
-                            {stips.map(l=><span key={l} className="stip-tag">{l}</span>)}
-                            <span style={{color:"#8e8e93",fontWeight:400}}>{b.units.toFixed(1)}u</span>
-                            {fmtCur(b.total)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          <div className="rev-card">
-            <div className="rev-card-title">{fiscalInfo.name}</div>
-            <div className="rev-card-range">{fiscalInfo.rangeStr}</div>
-            <table className="rev-table">
-              <tbody>
-                <tr><td>Unit revenue</td><td>{monthBD.units.toFixed(1)} units × ${UNIT_VAL}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(monthBD.unitRev)}</td></tr>
-                <tr><td>Base rate</td><td style={{fontSize:11}}>{monthBD.baseRev>0?`${Math.round(monthBD.baseRev/800)} × $800`:"-"}</td><td style={{textAlign:"right",fontWeight:600}}>{fmtCur(monthBD.baseRev)}</td></tr>
-                <tr className="total-row"><td colSpan="2">Total</td><td style={{textAlign:"right",fontWeight:800,color:"#34c759",fontSize:15}}>{fmtCur(monthBD.total)}</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ══ HISTORY ══ */}
-      {tab==="history"&&(
-        <div className="content">
-          <div className="year-card">
-            <div className="year-label">{curYear} Revenue</div>
-            <div className="year-value">{fmtCur(yearlyRev)}</div>
-            <div className="year-sub">Calendar year Jan 1 – Dec 31</div>
-          </div>
-          <div style={{marginBottom:10}}>
-            <select value={histMonthStart} onChange={e=>setHistMonthStart(e.target.value)}>
-              {allFiscalStarts.map(s=>{const info=getFiscalInfoFromStart(s);return<option key={s} value={s}>{info.name} ({info.rangeStr})</option>;})}
-            </select>
-          </div>
-          <div className="month-summary">
-            <div className="month-stat"><div className="month-stat-val">{histMonthCases}</div><div className="month-stat-lab">Cases</div></div>
-            <div className="month-stat"><div className="month-stat-val">{histMonthBD.units.toFixed(1)}</div><div className="month-stat-lab">Units</div></div>
-            <div className="month-stat"><div className="month-stat-val" style={{color:"#34c759",fontSize:16}}>{fmtCurShort(histMonthBD.total)}</div><div className="month-stat-lab">Revenue</div></div>
-            <button className="btn-download" onClick={()=>downloadCSV(histFiscalInfo,days)}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              CSV
-            </button>
-          </div>
-          {histMonthDays.length===0&&<div className="empty">No cases or stipends logged<br/><span style={{fontSize:12}}>for {histFiscalInfo.name}</span></div>}
-          {histMonthDays.map(dk=>{
-            const d=days[dk],b=calcDayBreakdown(dk,days);
-            const sites=[...new Set((d.cases||[]).map(c=>c.site))];
-            const stips=(d.stipends||[]).map(k=>STIP[k]?.label).filter(Boolean);
-            const wk=isWeekend(dk);
-            return(
-              <div key={dk} className="history-row" onClick={()=>{setDate(dk);setTab("log");}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-                  <div style={{display:"flex",alignItems:"center",gap:5}}>
-                    <div style={{fontSize:14,fontWeight:700,color:"#111"}}>{fmtShort(dk)}</div>
-                    {wk&&<span className="wkd-tag">WKD</span>}
-                  </div>
-                  <div style={{fontSize:14,fontWeight:800,color:"#34c759"}}>{fmtCur(b.total)}</div>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{fontSize:12,color:"#8e8e93"}}>
-                    {(d.cases||[]).length>0?`${(d.cases||[]).length} case${(d.cases||[]).length!==1?"s":""}`:""}{(d.cases||[]).length>0&&stips.length>0?" · ":""}{stips.join(", ")}{((d.cases||[]).length>0||stips.length>0)?" · ":""}{b.units.toFixed(1)} units
-                  </div>
-                  <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"flex-end"}}>
-                    {sites.map(s=>{const sc=SITE_STYLE[s]||SITE_STYLE.PHSW;return<span key={s} className="site-badge" style={{background:sc.bg,color:sc.color,fontSize:9}}>{s}</span>;})}
-                    {stips.map(l=><span key={l} className="stip-tag">{l}</span>)}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ══ ANALYTICS ══ */}
-      {tab==="analytics"&&(
-        <div className="content">
-          <div className="analytics-card">
-            <div className="section-title" style={{marginBottom:8}}>Goal type</div>
-            <div className="goal-toggle">
-              {[["units","Units"],["revenue","Revenue"]].map(([k,l])=>(
-                <button key={k} className={`goal-toggle-btn${goalType===k?" active":""}`} onClick={()=>{setGoalType(k);saveGoal(k,goalValue);}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <label className="form-label">{goalType==="units"?"Monthly unit goal":"Monthly revenue goal"}</label>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              {goalType==="revenue"&&<span style={{fontSize:16,color:"#8e8e93",fontWeight:500,flexShrink:0}}>$</span>}
-              <input type="number" min="0" step={goalType==="units"?"0.5":"100"} placeholder={goalType==="units"?"e.g. 200":"e.g. 20000"}
-                value={goalValue} onChange={e=>{setGoalValue(e.target.value);saveGoal(goalType,e.target.value);}} style={{fontSize:16}}/>
-              {goalType==="units"&&<span style={{fontSize:14,color:"#8e8e93",flexShrink:0}}>units</span>}
-            </div>
-            <div style={{fontSize:11,color:"#8e8e93",marginTop:5}}>{analyticsFiscalInfo.name} · {analyticsFiscalInfo.rangeStr}</div>
-          </div>
-          <div className="analytics-card">
-            <div className="section-title" style={{marginBottom:8}}>Progress — {analyticsFiscalInfo.name}</div>
-            {goal>0?(
-              <>
-                <ProgressChart fiscalInfo={analyticsFiscalInfo} allDays={days} goalType={goalType} goalValue={goalValue}/>
-                <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:12}}>
-                  <span style={{color:"#007aff",fontWeight:600}}>■ Actual</span>
-                  <span style={{color:"#34c759",fontWeight:600}}>- - Goal</span>
-                </div>
-                <div className="stat-grid">
-                  <div className="stat-box"><div className="stat-label">Achieved</div><div className="stat-value">{goalType==="units"?actualVal.toFixed(1):fmtCurShort(actualVal)}</div></div>
-                  <div className="stat-box"><div className="stat-label">Goal</div><div className="stat-value">{goalType==="units"?goal.toFixed(1):fmtCurShort(goal)}</div></div>
-                  <div className="stat-box"><div className="stat-label">Progress</div><div className={`stat-value${pct>=100?" green":pct>=70?" orange":""}`}>{pct.toFixed(1)}%</div></div>
-                  <div className="stat-box"><div className="stat-label">Remaining</div><div className="stat-value">{goalType==="units"?remaining.toFixed(1):fmtCurShort(remaining)}</div></div>
-                  <div className="stat-box"><div className="stat-label">Days left</div><div className="stat-value">{daysLeft}</div></div>
-                  <div className="stat-box"><div className="stat-label">Needed / day</div><div className={`stat-value${daysLeft===0&&remaining>0?" red":""}`}>{daysLeft>0?(goalType==="units"?neededPerDay.toFixed(1):fmtCurShort(neededPerDay)):(remaining<=0?"Done":"—")}</div></div>
-                  <div className="stat-box" style={{gridColumn:"1/-1"}}>
-                    <div className="stat-label">Projected total at current pace</div>
-                    <div className={`stat-value${projected>=goal?" green":" orange"}`} style={{fontSize:20}}>
-                      {goalType==="units"?projected.toFixed(1):fmtCurShort(projected)}
-                      <span style={{fontSize:12,fontWeight:400,color:"#8e8e93",marginLeft:8}}>{projected>=goal?"— on track":"— below pace"}</span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ):(
-              <div className="empty" style={{padding:"24px 0"}}>Enter a goal above to track your progress</div>
-            )}
-          </div>
-        </div>
-      )}
+  return`
+    <div class="rev-hero">
+      <div class="rev-hero-lbl">Today — ${fmtShort(td)}</div>
+      <div class="rev-hero-val">${fmtCur(todB.total)}</div>
     </div>
-  );
+    <div class="card" style="margin-top:-4px;margin-bottom:12px">${revTable(todB,1)}</div>
+    <div class="card">
+      <div class="rev-card-title" style="font-size:15px;font-weight:700;color:#111;margin-bottom:2px">This week</div>
+      <div style="font-size:11px;color:#8e8e93;margin-bottom:10px">${wkRange}</div>
+      ${revTable(wkB,baseDaysWk)}
+      ${wkDetail}
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:2px">${fi.name}</div>
+      <div style="font-size:11px;color:#8e8e93;margin-bottom:10px">${fi.range}</div>
+      ${revTable(moB,baseDaysMo)}
+    </div>`;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+// ── Render: History ───────────────────────────────────────────────
+function renderHistory(){
+  const curYear=new Date().getFullYear();
+  const yrKeys=Object.keys(S.days).filter(dk=>dk.startsWith(String(curYear)));
+  const yrRev=sumDays(yrKeys).total;
+  const fi=fiscalInfo(S.histMonth);
+  const hb=sumDays(fi.dates);
+  const allStarts=allFiscalStarts();
+  const SELECT=`<select onchange="setHistMonth(this.value)" style="flex:1">${allStarts.map(s=>{const info=fiscalInfo(s);return`<option value="${s}"${s===S.histMonth?' selected':''}>${info.name} (${info.range})</option>`;}).join('')}</select>`;
+
+  const histDays=fi.dates.filter(dk=>S.days[dk]&&((S.days[dk].cases||[]).length>0||(S.days[dk].stipends||[]).length>0||(S.days[dk].ancillary||[]).length>0||(S.days[dk].locumsPay>0))).sort().reverse();
+
+  const BREAKDOWN=`<div class="bk-card">
+    <div class="section-title" style="margin-bottom:8px">${fi.name} — Breakdown</div>
+    <div class="bk-sec">Units</div>
+    <div class="bk-row"><span class="bk-lbl">Case time units</span><span class="bk-val">${hb.ctU.toFixed(2)}</span></div>
+    <div class="bk-row"><span class="bk-lbl bk-purple">Case ancillary units</span><span class="bk-val bk-purple">${hb.caU.toFixed(2)}</span></div>
+    <div class="bk-row"><span class="bk-lbl bk-purple">Standalone ancillary</span><span class="bk-val bk-purple">${hb.saU.toFixed(2)}</span></div>
+    <div class="bk-row"><span class="bk-lbl bk-blue">Stipend units</span><span class="bk-val bk-blue">${hb.stU.toFixed(2)}</span></div>
+    <div class="bk-div"></div>
+    <div class="bk-total"><span class="bk-lbl">Total units</span><span class="bk-val" style="color:#111;font-size:14px">${hb.units.toFixed(2)}</span></div>
+    <div class="bk-sec" style="margin-top:10px">Revenue</div>
+    <div class="bk-row"><span class="bk-lbl">Unit revenue</span><span class="bk-val">${fmtCur(hb.unitRev)}</span></div>
+    <div class="bk-row"><span class="bk-lbl">Base rate (${hb.baseRev>0?Math.round(hb.baseRev/800):0} days × $800)</span><span class="bk-val">${fmtCur(hb.baseRev)}</span></div>
+    ${hb.locums>0?`<div class="bk-row"><span class="bk-lbl bk-green">Locums</span><span class="bk-val bk-green">${fmtCur(hb.locums)}</span></div>`:''}
+    <div class="bk-div"></div>
+    <div class="bk-total"><span class="bk-lbl">Total revenue</span><span class="bk-val">${fmtCur(hb.total)}</span></div>
+  </div>`;
+
+  const HIST_ROWS=histDays.map(dk=>{
+    const d=S.days[dk],b=dayBreakdown(dk);
+    const sites=[...new Set((d.cases||[]).map(c=>c.site))];
+    const stips=(d.stipends||[]).map(k=>STIP[k]?.label).filter(Boolean);
+    const wk=isWeekend(dk),hasL=b.locums>0;
+    return`<div class="hist-row" onclick="gotoDay('${dk}')">
+      <div class="hist-row-top">
+        <div class="hist-date">${fmtShort(dk)}${wk?'<span class="wkd-tag">WKD</span>':''}${hasL?'<span class="locums-tag">Locums</span>':''}</div>
+        <div class="hist-rev"><div class="hist-rev-amt">${fmtCur(b.total)}</div><div class="hist-units">${b.units.toFixed(1)} units</div></div>
+      </div>
+      <div class="hist-meta">
+        <span>${(d.cases||[]).length>0?(d.cases.length)+' case'+(d.cases.length!==1?'s':''):''} ${(d.cases||[]).length>0&&stips.length>0?'· ':''}${stips.join(', ')}${b.caU>0?' · <span style="color:#5856d6">'+b.caU.toFixed(2)+' anc</span>':''}${b.saU>0?' · <span style="color:#5856d6">'+b.saU.toFixed(2)+' anc-only</span>':''}${hasL?' · <span style="color:#15803d">'+fmtCur(b.locums)+' locums</span>':''}</span>
+        <div class="hist-badges">${sites.map(s=>{const sc=SS[s]||SS.PHSW;return`<span class="site-badge" style="background:${sc.bg};color:${sc.c};font-size:9px">${s}</span>`;}).join('')}${stips.map(l=>`<span class="stip-tag">${l}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return`
+    <div class="year-card">
+      <div class="year-lbl">${curYear} Revenue</div>
+      <div class="year-val">${fmtCur(yrRev)}</div>
+      <div class="year-sub">Calendar year Jan 1 – Dec 31</div>
+    </div>
+    <div class="month-hdr">${SELECT}<button class="btn-download" onclick="doExportCSV('${S.histMonth}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button></div>
+    ${BREAKDOWN}
+    ${histDays.length===0?`<div class="empty">No activity logged<br><span style="font-size:12px">for ${fi.name}</span></div>`:''}
+    ${histDays.length>0?`<div class="section-title">Daily log — ${fi.name}</div>`:''}
+    ${HIST_ROWS}`;
+}
+
+// ── Render: Analytics ─────────────────────────────────────────────
+function renderAnalytics(){
+  const td=todayStr(),fi=fiscalInfo(fiscalStart(td));
+  const elapsed=fi.dates.filter(dk=>dk<=td);
+  const actB=sumDays(elapsed);
+  const isRev=S.goal.type==='revenue';
+  const actual=isRev?actB.total:actB.units;
+  const goal=parseFloat(S.goal.value)||0;
+  const N=fi.dates.length,Ne=elapsed.length,Nl=Math.max(0,N-Ne);
+  const pct=goal>0?Math.min(100,actual/goal*100):0;
+  const rem=Math.max(0,goal-actual);
+  const pace=Ne>0?actual/Ne:0;
+  const proj=pace*N;
+  const needPerDay=Nl>0?rem/Nl:0;
+  function fG(v){return isRev?fmtCurShort(v):v.toFixed(1)+' u';}
+
+  // Build chart SVG
+  let chartSVG='';
+  if(goal>0){
+    let run=0;const pts=[];
+    fi.dates.forEach((dk,i)=>{
+      if(dk<=td){const b=dayBreakdown(dk);run+=isRev?b.total:b.units;pts.push({i,v:run});}
+    });
+    const maxV=Math.max(goal*1.15,run*1.15,1);
+    const W=310,H=160,ML=52,MR=10,MT=10,MB=26,PW=W-ML-MR,PH=H-MT-MB;
+    const X=i=>ML+(N>1?i/(N-1):0.5)*PW;
+    const Y=v=>MT+PH-(v/maxV)*PH;
+    const fmtY=v=>isRev?(v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v.toFixed(0)):v.toFixed(0);
+    const polyline=pts.length>1?`<polyline points="${pts.map(p=>X(p.i).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ')}" fill="none" stroke="#007aff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`:'';
+    const dot=pts.length>0?`<circle cx="${X(pts[pts.length-1].i).toFixed(1)}" cy="${Y(pts[pts.length-1].v).toFixed(1)}" r="5" fill="#007aff" stroke="#fff" stroke-width="2"/>`:'';
+    const lastLabel=pts.length>0?`<text x="${X(pts[pts.length-1].i).toFixed(1)}" y="${(Y(pts[pts.length-1].v)-9).toFixed(1)}" text-anchor="middle" font-size="9" fill="#007aff" font-weight="600">${fmtY(run)}</text>`:'';
+    chartSVG=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
+      ${[0,PH/3,PH*2/3,PH].map((yo,k)=>`<line key="${k}" x1="${ML}" y1="${MT+yo}" x2="${ML+PW}" y2="${MT+yo}" stroke="#f2f2f7" stroke-width="1"/>`).join('')}
+      <line x1="${X(0)}" y1="${Y(0)}" x2="${X(N-1)}" y2="${Y(goal)}" stroke="#34c759" stroke-width="2" stroke-dasharray="6,4" opacity="0.9"/>
+      ${polyline}${dot}${lastLabel}
+      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+PH}" stroke="#d1d1d6" stroke-width="1"/>
+      <line x1="${ML}" y1="${MT+PH}" x2="${ML+PW}" y2="${MT+PH}" stroke="#d1d1d6" stroke-width="1"/>
+      ${[0,goal/2,goal].map((v,k)=>`<text x="${ML-4}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#8e8e93">${fmtY(v)}</text>`).join('')}
+      <text x="${X(0)}" y="${H-6}" text-anchor="middle" font-size="9" fill="#8e8e93">${fi.dates[0]?fi.dates[0].slice(5):''}</text>
+      <text x="${X(Math.floor((N-1)/2))}" y="${H-6}" text-anchor="middle" font-size="9" fill="#8e8e93">${fi.dates[Math.floor((N-1)/2)]?fi.dates[Math.floor((N-1)/2)].slice(5):''}</text>
+      <text x="${X(N-1)}" y="${H-6}" text-anchor="middle" font-size="9" fill="#8e8e93">${fi.dates[N-1]?fi.dates[N-1].slice(5):''}</text>
+      <text x="${X(N-1)-3}" y="${(Y(goal)-7).toFixed(1)}" text-anchor="end" font-size="9" fill="#34c759" font-weight="600">Goal</text>
+    </svg>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px">
+      <span style="color:#007aff;font-weight:600">■ Actual</span>
+      <span style="color:#34c759;font-weight:600">- - Goal</span>
+    </div>`;
+  }
+
+  return`
+    <div class="analytics-card card">
+      <div class="section-title" style="margin-bottom:8px">Goal type</div>
+      <div class="goal-toggle">
+        <button class="goal-btn${!isRev?' active':''}" onclick="setGoalType('units')">Units</button>
+        <button class="goal-btn${isRev?' active':''}" onclick="setGoalType('revenue')">Revenue</button>
+      </div>
+      <label class="form-label">${isRev?'Monthly revenue goal':'Monthly unit goal'}</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${isRev?'<span style="font-size:16px;color:#8e8e93;font-weight:500;flex-shrink:0">$</span>':''}
+        <input type="number" min="0" step="${isRev?'100':'0.5'}" placeholder="${isRev?'e.g. 20000':'e.g. 200'}" value="${esc(S.goal.value)}" oninput="setGoalVal(this.value)" style="font-size:16px">
+        ${!isRev?'<span style="font-size:14px;color:#8e8e93;flex-shrink:0">units</span>':''}
+      </div>
+      <div style="font-size:11px;color:#8e8e93;margin-top:5px">${fi.name} · ${fi.range}</div>
+    </div>
+    <div class="analytics-card card">
+      <div class="section-title" style="margin-bottom:8px">Progress — ${fi.name}</div>
+      ${goal>0?`
+        ${chartSVG}
+        <div class="stat-grid">
+          <div class="stat-box"><div class="stat-lbl">Achieved</div><div class="stat-val">${fG(actual)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Goal</div><div class="stat-val">${fG(goal)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Progress</div><div class="stat-val${pct>=100?' green':pct>=70?' orange':''}">${pct.toFixed(1)}%</div></div>
+          <div class="stat-box"><div class="stat-lbl">Remaining</div><div class="stat-val">${fG(rem)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Days left</div><div class="stat-val">${Nl}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Needed / day</div><div class="stat-val${Nl===0&&rem>0?' red':''}">${Nl>0?fG(needPerDay):(rem<=0?'Done':'—')}</div></div>
+          <div class="stat-box stat-full">
+            <div class="stat-lbl">Projected total at current pace</div>
+            <div class="stat-val${proj>=goal?' green':' orange'}" style="font-size:20px">${fG(proj)}<span style="font-size:12px;font-weight:400;color:#8e8e93;margin-left:8px">${proj>=goal?'— on track':'— below pace'}</span></div>
+          </div>
+        </div>`:'<div class="empty" style="padding:24px 0">Enter a goal above to track your progress</div>'}
+    </div>`;
+}
+
+// ── Render: Ancillary Modal ───────────────────────────────────────
+function renderModal(){
+  const el=document.getElementById('modal');
+  if(!S.ancModal){el.classList.add('hidden');return;}
+  el.classList.remove('hidden');
+  const title=S.ancModal==='case'?'Case Ancillary':'Ancillary Only';
+  const sub=S.ancModal==='case'?'Procedures linked to this case':'Standalone procedures — no case time required';
+  const sel=S.ancSel;
+  const tot=ancUnits(sel);
+  const hasDisc=sel.filter(k=>ANCS.find(a=>a.key===k)?.isBlock).length>=2;
+  const nonBlocks=ANCS.filter(a=>!a.isBlock);
+  const blocks=ANCS.filter(a=>a.isBlock);
+  function procCard(p){
+    const isSel=sel.includes(p.key);const du=isSel?procDispUnits(p.key,sel):p.units;const isDisc=isSel&&du<p.units;
+    const cls=isSel?(isDisc?'sel-disc':'sel'):'';
+    const nmCls=isSel?(isDisc?'sel-disc':'sel'):'';
+    const chkCls=isSel?(isDisc?'on-disc':'on'):'';
+    const unitTxt=isDisc?`<span style="text-decoration:line-through;opacity:.5">${p.units.toFixed(2)}</span> <span style="color:#7c3aed;font-weight:700">${du.toFixed(2)} units (½)</span>`:`${p.units.toFixed(2)} units`;
+    return`<div class="proc-card${cls?' '+cls:''}" onclick="toggleAncProc('${p.key}')">
+      <div class="proc-left"><div class="proc-name${nmCls?' '+nmCls:''}">${p.label}</div><div class="proc-units">${unitTxt}</div></div>
+      <div class="proc-check${chkCls?' '+chkCls:''}">${isSel?'✓':''}</div>
+    </div>`;
+  }
+  const preview=sel.length>0?`<div class="anc-preview"><strong>${sel.length} procedure${sel.length!==1?'s':''}</strong> · <strong>${tot.toFixed(2)} units</strong>${hasDisc?'<span style="color:#7c3aed"> (nerve block discount applied)</span>':''}</div>`:'';
+  el.innerHTML=`<div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-body">
+      <div class="modal-title">${title}</div>
+      <div class="modal-sub">${sub}</div>
+      ${nonBlocks.map(procCard).join('')}
+      <div class="proc-divider">Nerve Blocks</div>
+      ${hasDisc?'<div class="block-note">2nd+ nerve block = ½ unit value</div>':''}
+      ${blocks.map(procCard).join('')}
+      ${preview}
+      <div class="btn-row">
+        <button class="btn btn-purple" onclick="confirmAnc()" ${sel.length===0?'disabled style="background:#c4b5fd"':''}>Add${tot>0?' ('+tot.toFixed(2)+' units)':''}</button>
+        <button class="btn btn-gray btn-sm" onclick="closeAnc()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Master render ─────────────────────────────────────────────────
+function renderContent(){
+  const html=
+    S.tab==='log'?renderLog():
+    S.tab==='stipend'?renderStipend():
+    S.tab==='revenue'?renderRevenue():
+    S.tab==='history'?renderHistory():renderAnalytics();
+  document.getElementById('main').innerHTML=html;
+  if(S.tab==='log'&&S.showForm) initFormInputs();
+}
+
+function render(){renderHeader();renderContent();renderModal();}
+
+function initFormInputs(){
+  // Restore current time to form inputs (they reset on re-render)
+  const ts=document.getElementById('inp-start');
+  const te=document.getElementById('inp-end');
+  if(ts)ts.addEventListener('input',updatePreview);
+  if(te)te.addEventListener('input',updatePreview);
+  updatePreview();
+}
+
+function updatePreview(){
+  const ts=document.getElementById('inp-start');
+  const te=document.getElementById('inp-end');
+  const pb=document.getElementById('preview-box');
+  const ab=document.getElementById('add-case-btn');
+  if(!ts||!te||!pb) return;
+  const s=ts.value,e=te.value;
+  const tErr=s&&e&&pm(e)<=pm(s);
+  if(ab) ab.disabled=tErr||!s||!e;
+  if(!s||!e||tErr){pb.innerHTML='';return;}
+  const du=pm(e)-pm(s);
+  const tu=caseUnits(s,e,S.date);
+  const tot=tu+S.nc.ancUnits;
+  const wknd=isWeekend(S.date);
+  let extra='';
+  if(S.nc.ancUnits>0) extra=` + anc: <strong style="color:#5856d6">${S.nc.ancUnits.toFixed(2)}</strong> = <strong>${tot.toFixed(2)} total</strong>`;
+  else if(wknd) extra=`<span style="color:#6d28d9"> — weekend ×1.2</span>`;
+  else if(pm(e)>CUTOFF) extra=`<span style="color:#856404"> — after-hours ×1.2</span>`;
+  pb.innerHTML=`<div class="preview-box"><strong>${fmins(du)}</strong> · time: <strong>${tu.toFixed(1)} units</strong>${extra}</div>`;
+}
+
+// ── Action handlers (global) ──────────────────────────────────────
+function setTab(t){S.tab=t;S.showForm=false;S.overlapErr=false;S.timeErr=false;render();}
+function setDate(v){S.date=v;S.showForm=false;render();}
+function setHistMonth(v){S.histMonth=v;renderContent();}
+function gotoDay(ds){S.date=ds;S.tab='log';render();}
+function setSite(s){S.nc.site=s;renderContent();}
+function showForm(){S.showForm=true;S.overlapErr=false;S.timeErr=false;S.nc.ancKeys=[];S.nc.ancUnits=0;S.nc.ancLabel='';render();}
+function cancelForm(){S.showForm=false;S.overlapErr=false;S.timeErr=false;render();}
+
+function addCase(){
+  const ts=document.getElementById('inp-start');
+  const te=document.getElementById('inp-end');
+  if(!ts||!te)return;
+  const s=ts.value,e=te.value;
+  if(!s||!e||pm(e)<=pm(s)){S.timeErr=true;renderContent();return;}
+  const d=getDay(S.date),cases=d.cases||[];
+  if(hasOverlap(s,e,cases)){S.overlapErr=true;renderContent();return;}
+  const nc={id:Date.now()+'',site:S.nc.site,start:s,end:e,ancillaryKeys:S.nc.ancKeys,ancillaryUnits:S.nc.ancUnits,ancillaryLabel:S.nc.ancLabel};
+  setDay(S.date,{...d,cases:[...cases,nc]});
+  S.nc={site:S.nc.site,ancKeys:[],ancUnits:0,ancLabel:''};
+  S.showForm=false;S.overlapErr=false;S.timeErr=false;
+  render();
+}
+
+function delCase(id){
+  const d=getDay(S.date);setDay(S.date,{...d,cases:(d.cases||[]).filter(c=>c.id!==id)});renderContent();
+}
+function delAncOnly(id){
+  const d=getDay(S.date);setDay(S.date,{...d,ancillary:(d.ancillary||[]).filter(a=>a.id!==id)});renderContent();
+}
+function toggleStip(key){
+  const d=getDay(S.date),st=d.stipends||[];
+  setDay(S.date,{...d,stipends:st.includes(key)?st.filter(k=>k!==key):[...st,key]});
+  renderContent();
+}
+function setLocums(val){
+  const d=getDay(S.date);setDay(S.date,{...d,locumsPay:val});
+}
+function setGoalType(t){S.goal.type=t;save();renderContent();}
+function setGoalVal(v){S.goal.value=v;save();renderContent();}
+
+function openAnc(mode){
+  S.ancModal=mode;
+  S.ancSel=mode==='case'?[...S.nc.ancKeys]:[];
+  renderModal();
+}
+function closeAnc(){S.ancModal=null;renderModal();}
+function toggleAncProc(key){
+  S.ancSel=S.ancSel.includes(key)?S.ancSel.filter(k=>k!==key):[...S.ancSel,key];
+  renderModal();
+}
+function confirmAnc(){
+  const keys=S.ancSel,units=ancUnits(keys);
+  const label=keys.map(k=>ANCS.find(a=>a.key===k)?.label).filter(Boolean).join(', ');
+  if(S.ancModal==='case'){
+    S.nc.ancKeys=keys;S.nc.ancUnits=units;S.nc.ancLabel=label;
+    S.ancModal=null;renderContent();renderModal();updatePreview();
+  } else {
+    const entry={id:Date.now()+'',procedures:keys,units,label};
+    const d=getDay(S.date);setDay(S.date,{...d,ancillary:[...(d.ancillary||[]),entry]});
+    S.ancModal=null;renderContent();renderModal();
+  }
+}
+
+// Close modal when tapping overlay background
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeAnc();});
+
+// ── App icon ──────────────────────────────────────────────────────
+function createIcon(){
+  try{
+    const c=document.createElement('canvas');c.width=c.height=180;
+    const ctx=c.getContext('2d');
+    const g=ctx.createLinearGradient(0,0,180,180);g.addColorStop(0,'#007aff');g.addColorStop(1,'#5856d6');
+    ctx.beginPath();ctx.roundRect(0,0,180,180,40);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle='white';ctx.lineWidth=9;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(10,90);ctx.lineTo(45,90);ctx.lineTo(60,38);ctx.lineTo(80,145);ctx.lineTo(100,58);ctx.lineTo(116,112);ctx.lineTo(132,90);ctx.lineTo(170,90);ctx.stroke();
+    const lnk=document.createElement('link');lnk.rel='apple-touch-icon';lnk.href=c.toDataURL();document.head.appendChild(lnk);
+  }catch(e){}
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+load();
+createIcon();
+render();
 </script>
 </body>
 </html>
