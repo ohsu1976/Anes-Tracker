@@ -828,18 +828,24 @@ function updatePreview(){
 
 // ── Action handlers (global) ──────────────────────────────────────
 function setTab(t){S.tab=t;S.showForm=false;S.editId=null;S.overlapErr=false;S.timeErr=false;render();}
-function setDate(v){S.date=v;S.showForm=false;S.editId=null;render();}
 function setHistMonth(v){S.histMonth=v;renderContent();}
 function gotoDay(ds){S.date=ds;S.tab='log';render();}
 function setSite(s){S.nc.site=s;renderContent();}
 
 function showForm(){
   S.showForm=true;S.editId=null;S.overlapErr=false;S.timeErr=false;
-  S.nc={site:'PHSW',start:currTime(),end:currTime(),ancKeys:[],ancUnits:0,ancLabel:''};
+  // Default site to the last logged case for this date, otherwise PHSW
+  const cases=getDay(S.date).cases||[];
+  const lastSite=cases.length>0?cases[cases.length-1].site:'PHSW';
+  S.nc={site:lastSite,start:currTime(),end:currTime(),ancKeys:[],ancUnits:0,ancLabel:''};
   render();
 }
 function cancelForm(){S.showForm=false;S.editId=null;S.overlapErr=false;S.timeErr=false;render();}
-
+function setDate(v){
+  S.date=v;S.showForm=false;S.editId=null;
+  S.nc={...S.nc,site:'PHSW'};  // reset site to PHSW on date change
+  render();
+}
 function editCase(id){
   // If tapping the already-open edit form for same case, collapse it
   if(S.editId===id){cancelForm();return;}
